@@ -1,0 +1,33 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Sensitive secrets
+.streamlit/secrets.toml
+.env
+.env.local
+.env.*.local
+
+# Heavy ML Weights & Datasets
+*.pth
+model_weights*.pth
+dataset/
+
+# Vercel
+.vercel/
+
+# Runtime / Temp Files
+*.pdf
+temp_plot.png
+*.log
+
+# OS Generated
+.DS_Store
+Thumbs.db

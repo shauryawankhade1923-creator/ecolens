@@ -1,0 +1,48 @@
+{
+  "plants": [
+    {
+      "name": "Sal Tree",
+      "scientific_name": "Shorea robusta",
+      "category": "Tree",
+      "region": "Indian subcontinent, deciduous forests",
+      "summary": "A dominant canopy tree in Indian deciduous forests, valued for timber and resin. Its dense canopy is a key indicator of healthy forest cover."
+    },
+    {
+      "name": "Teak",
+      "scientific_name": "Tectona grandis",
+      "category": "Tree",
+      "region": "South and Southeast Asia",
+      "summary": "A large deciduous tree prized for durable timber; often used as a bioindicator species when mapping deforestation in tropical regions."
+    }
+  ],
+  "animals": [
+    {
+      "name": "Bengal Tiger",
+      "scientific_name": "Panthera tigris tigris",
+      "category": "Mammal",
+      "region": "Indian subcontinent",
+      "summary": "An apex predator whose habitat range is a strong proxy for forest health; tiger corridors are frequently used to prioritize conservation zones."
+    },
+    {
+      "name": "Indian Elephant",
+      "scientific_name": "Elephas maximus indicus",
+      "category": "Mammal",
+      "region": "South Asia",
+      "summary": "A keystone species that shapes forest structure through seed dispersal and vegetation clearing; highly sensitive to canopy fragmentation."
+    }
+  ],
+  "terrain": [
+    {
+      "name": "Western Ghats",
+      "type": "Mountain Range",
+      "region": "Western India",
+      "summary": "A UNESCO World Heritage mountain range and biodiversity hotspot, home to dense evergreen forest and thousands of endemic species."
+    },
+    {
+      "name": "Ganges River",
+      "type": "River",
+      "region": "Northern India",
+      "summary": "One of the major river systems of South Asia, supporting extensive floodplain forest and wetland ecosystems along its basin."
+    }
+  ]
+}

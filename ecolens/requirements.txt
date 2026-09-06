@@ -1,0 +1,10 @@
+streamlit>=1.32
+torch
+torchvision
+pillow
+pandas
+reportlab
+wikipedia
+SpeechRecognition
+pyaudio
+pyttsx3

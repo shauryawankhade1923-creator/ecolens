@@ -123,10 +123,9 @@ def compute_vegetation_indices(image: Image.Image):
 # GEMINI MULTI-MODEL CASCADE
 # ============================================================
 GEMINI_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-1.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-flash-8b",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
 ]
 
 def _call_gemini_api(payload, api_key, timeout=25):
@@ -484,6 +483,7 @@ def api_health():
     }
 
 @app.get("/api/species")
+@app.get("/species")
 def list_species():
     species_list = []
     for name, details in SPECIES_DATABASE.items():
@@ -503,6 +503,7 @@ def list_species():
     return {"count": len(species_list), "species": species_list}
 
 @app.get("/api/species/{species_name}")
+@app.get("/species/{species_name}")
 def get_species_detail(species_name: str):
     data = SPECIES_DATABASE.get(species_name)
     if not data and SPECIES_NAME_MAP:
@@ -514,6 +515,8 @@ def get_species_detail(species_name: str):
     return {"name": species_name, "details": data}
 
 @app.post("/api/forest/analyze")
+@app.post("/forest/analyze")
+@app.post("/analyze")
 async def analyze_forest(file: UploadFile = File(...)):
     contents = await file.read()
     try:
@@ -557,6 +560,8 @@ async def analyze_forest(file: UploadFile = File(...)):
     }
 
 @app.post("/api/species/identify")
+@app.post("/species/identify")
+@app.post("/identify")
 async def identify_species(file: UploadFile = File(...), species_type: str = Form("plant")):
     contents = await file.read()
     try:
@@ -639,10 +644,12 @@ async def identify_species(file: UploadFile = File(...), species_type: str = For
     }
 
 @app.post("/api/voice/ask")
+@app.post("/voice/ask")
 def voice_ask(req: VoiceQuestionRequest):
     return answer_question(req.question, req.species_name, req.chat_history)
 
 @app.get("/api/config/keys")
+@app.get("/config/keys")
 def get_key_status():
     return {
         "gemini_set": bool(API_KEYS.get("gemini")),
@@ -650,6 +657,7 @@ def get_key_status():
     }
 
 @app.post("/api/config/keys")
+@app.post("/config/keys")
 def update_keys(req: KeyConfigRequest):
     if req.gemini_key is not None:
         API_KEYS["gemini"] = req.gemini_key.strip()

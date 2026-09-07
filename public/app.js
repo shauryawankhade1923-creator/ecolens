@@ -302,12 +302,21 @@ async function handleSpeciesUpload(input) {
   formData.append('species_type', scannerType);
 
   try {
-    const res = await fetch(`${API_BASE}/api/species/identify`, {
+    let res = await fetch(`${API_BASE}/api/species/identify`, {
       method: 'POST',
       body: formData
     });
+    if (!res.ok && res.status === 404) {
+      res = await fetch(`${API_BASE}/species/identify`, {
+        method: 'POST',
+        body: formData
+      });
+    }
     const data = await res.json();
     document.getElementById('scanner-loading').classList.add('hidden');
+    if (!res.ok || !data.species_name) {
+      throw new Error(data.detail || 'Species could not be identified.');
+    }
     displaySpeciesResult(data);
   } catch (e) {
     document.getElementById('scanner-loading').classList.add('hidden');

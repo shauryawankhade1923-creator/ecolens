@@ -481,14 +481,39 @@
             <h2 class="font-headline text-2xl font-bold">🌲 Forest AI Environmental Engine</h2>
             <p class="text-xs text-on-surface-variant">ResNet-18 Deep Learning + Optical Vegetation Indices (GLI/VARI) + XAI</p>
           </div>
-          <button onclick="document.getElementById('forest-file-input').click()" class="px-4 py-2 rounded-full bg-secondary text-on-secondary font-semibold text-xs flex items-center gap-2 hover:opacity-90 shadow-md">
-            <span class="material-symbols-outlined text-[16px]">cloud_upload</span> Upload Satellite Image
-          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="startForestCamera()" class="px-3.5 py-2 rounded-full bg-surface-container-high hover:bg-surface-bright text-primary border border-primary/30 font-semibold text-xs flex items-center gap-1.5 shadow transition-all active:scale-95">
+              <span class="material-symbols-outlined text-[16px]">photo_camera</span> Live Camera
+            </button>
+            <button onclick="document.getElementById('forest-file-input').click()" class="px-4 py-2 rounded-full bg-secondary text-on-secondary font-semibold text-xs flex items-center gap-1.5 hover:opacity-90 shadow transition-all active:scale-95">
+              <span class="material-symbols-outlined text-[16px]">cloud_upload</span> Upload Image
+            </button>
+          </div>
           <input type="file" id="forest-file-input" accept="image/*" class="hidden" onchange="handleForestUpload(this)"/>
+          <input type="file" id="forest-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleForestUpload(this)"/>
+        </div>
+
+        <!-- Live Camera Stream Container -->
+        <div id="forest-camera-container" class="relative w-full rounded-2xl overflow-hidden bg-black border border-primary/40 hidden flex-col items-center justify-center min-h-[300px]">
+          <video id="forest-camera-feed" class="w-full max-h-96 object-cover" autoplay playsinline muted></video>
+          <canvas id="forest-camera-canvas" class="hidden"></canvas>
+          
+          <!-- Floating Camera Controls -->
+          <div class="absolute bottom-4 inset-x-0 flex items-center justify-center gap-4 z-10">
+            <button type="button" onclick="stopForestCamera()" class="w-10 h-10 rounded-full bg-surface-container-highest/80 text-on-surface flex items-center justify-center shadow backdrop-blur hover:bg-surface-bright" title="Cancel">
+              <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+            <button type="button" onclick="captureFromForestCamera()" class="w-14 h-14 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all border-4 border-surface" title="Capture & Analyze">
+              <span class="material-symbols-outlined text-[26px]">camera</span>
+            </button>
+            <button type="button" onclick="switchForestCamera()" class="w-10 h-10 rounded-full bg-surface-container-highest/80 text-on-surface flex items-center justify-center shadow backdrop-blur hover:bg-surface-bright" title="Flip Camera">
+              <span class="material-symbols-outlined text-[20px]">flip_camera_android</span>
+            </button>
+          </div>
         </div>
 
         <!-- Upload & Preview Canvas -->
-        <div class="relative w-full rounded-2xl overflow-hidden bg-surface-container-low border border-surface-container-highest/40 min-h-[260px] flex items-center justify-center">
+        <div id="forest-preview-container" class="relative w-full rounded-2xl overflow-hidden bg-surface-container-low border border-surface-container-highest/40 min-h-[260px] flex items-center justify-center">
           <img id="forest-img-preview" class="w-full max-h-80 object-cover hidden" alt="Uploaded Satellite Image"/>
           
           <div id="forest-upload-placeholder" class="flex flex-col items-center justify-center p-8 text-center cursor-pointer" onclick="document.getElementById('forest-file-input').click()">
@@ -574,20 +599,111 @@
             </div>
           </div>
 
+          <!-- Interactive Before vs After Canopy Comparison Slider -->
+          <div class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-low border border-surface-container-highest/40">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-secondary text-[20px]">compare</span>
+                <div>
+                  <h4 class="font-headline text-sm font-bold text-on-surface">Interactive Before & After Canopy Comparison</h4>
+                  <p class="text-[11px] text-on-surface-variant">Drag slider to visually compare baseline state against simulated afforestation recovery</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-secondary/15 text-secondary font-mono text-[10px] font-bold border border-secondary/30">5-Year Restoration Target</span>
+            </div>
+
+            <!-- Split Image Draggable Viewer -->
+            <div id="forest-slider-container" class="relative w-full h-[260px] md:h-[320px] rounded-xl overflow-hidden select-none border border-surface-container-highest/60 bg-black">
+              <!-- After Image (Bottom Layer: Full Afforestation Recovery) -->
+              <img id="forest-slider-after" class="absolute inset-0 w-full h-full object-cover" alt="After: Restored Canopy" />
+              
+              <!-- Before Image (Top Layer: Current / Degraded State clipped by slider) -->
+              <div id="forest-slider-before-wrapper" class="absolute inset-y-0 left-0 overflow-hidden border-r-2 border-white shadow-[0_0_15px_rgba(255,255,255,0.7)]" style="width: 50%;">
+                <img id="forest-slider-before" class="absolute inset-0 max-w-none h-full object-cover" alt="Before: Current Canopy" />
+                <span class="absolute top-3 left-3 px-2 py-1 rounded bg-black/70 backdrop-blur text-white text-[10px] font-mono font-bold uppercase tracking-wider">Before (Current)</span>
+              </div>
+              
+              <span class="absolute top-3 right-3 px-2 py-1 rounded bg-secondary/80 backdrop-blur text-white text-[10px] font-mono font-bold uppercase tracking-wider">After (Restored Target)</span>
+
+              <!-- Draggable Divider Control Range Input -->
+              <input type="range" min="0" max="100" value="50" id="forest-split-range" oninput="updateForestSlider(this.value)" class="absolute inset-0 opacity-0 cursor-ew-resize z-20 w-full h-full m-0 p-0"/>
+
+              <!-- Visual Center Handle -->
+              <div id="forest-slider-handle" class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white text-black shadow-xl flex items-center justify-center pointer-events-none z-10" style="left: 50%;">
+                <span class="material-symbols-outlined text-[18px]">code</span>
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center text-[10px] font-mono text-on-surface-variant px-1">
+              <span>◀ Drag Left: Reveal Afforestation Recovery</span>
+              <span>Drag Right: Reveal Current Observation ▶</span>
+            </div>
+          </div>
+
+          <!-- Afforestation & Canopy Restoration Roadmap Card -->
+          <div class="p-4 rounded-xl bg-surface-container-low border border-secondary/30 flex flex-col gap-3 shadow-md">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-secondary text-[22px]">park</span>
+                <div>
+                  <h4 class="font-headline text-sm font-bold text-on-surface">🌱 Afforestation & Canopy Restoration Roadmap</h4>
+                  <p id="afforest-summary" class="text-[11px] text-on-surface-variant">Recommended multi-tier ecological regeneration protocol for this terrain</p>
+                </div>
+              </div>
+              <div class="px-2.5 py-1 rounded-full bg-secondary/15 text-secondary border border-secondary/30 font-mono text-[10px] font-bold" id="afforest-carbon-badge">
+                ~22 tonnes CO2/ha/yr
+              </div>
+            </div>
+
+            <!-- Recommended Native Species Grid -->
+            <div class="flex flex-col gap-1.5 pt-1">
+              <span class="font-mono text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">Target Native Tree Species for Planting</span>
+              <div id="afforest-species-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <!-- Populated dynamically with native trees, growth rates, and roles -->
+              </div>
+            </div>
+
+            <!-- Soil & Hydrological Interventions -->
+            <div class="p-3 rounded-lg bg-surface-container border border-surface-container-highest/30 flex flex-col gap-1 text-xs">
+              <div class="flex items-center gap-1.5 text-secondary font-mono text-[11px] font-bold">
+                <span class="material-symbols-outlined text-[15px]">water_drop</span> Soil & Hydrological Interventions:
+              </div>
+              <p id="afforest-soil" class="text-on-surface-variant leading-relaxed text-[11px]">
+                Contour trenching, organic mulch retention, and mycorrhizal fungal inoculation.
+              </p>
+            </div>
+
+            <!-- Phased Timeline -->
+            <div class="p-3 rounded-lg bg-surface-container border border-surface-container-highest/30 flex flex-col gap-1 text-xs">
+              <div class="flex items-center gap-1.5 text-primary font-mono text-[11px] font-bold">
+                <span class="material-symbols-outlined text-[15px]">timeline</span> Phased Recovery Timeline:
+              </div>
+              <p id="afforest-timeline" class="text-on-surface-variant leading-relaxed text-[11px]">
+                Months 1-6: Ground preparation & pioneer planting; Years 1-3: Canopy closure; Years 4+: Climax forest succession.
+              </p>
+            </div>
+          </div>
+
           <!-- Gemini AI Autonomous Diagnostics Accordion -->
           <div class="p-4 rounded-xl bg-surface-container-low border border-surface-container-highest/40 flex flex-col gap-3">
             <div class="flex items-center justify-between cursor-pointer" onclick="document.getElementById('forest-diag-body').classList.toggle('hidden')">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary text-[20px]">auto_awesome</span>
-                <span class="font-headline text-sm font-semibold">Gemini Autonomous Ecological Review</span>
+                <div>
+                  <span class="font-headline text-sm font-semibold">Gemini Autonomous Ecological Review</span>
+                  <span id="diag-score-pill" class="ml-2 px-2 py-0.5 rounded bg-secondary/15 text-secondary font-mono text-[10px] font-bold">Health: 88/100</span>
+                </div>
               </div>
               <span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span>
             </div>
             <div id="forest-diag-body" class="flex flex-col gap-2 pt-2 border-t border-surface-container-highest/30 text-xs">
               <div><strong class="text-secondary font-mono">Biome:</strong> <span id="diag-biome">Neotropical Moist Broadleaf</span></div>
-              <div><strong class="text-primary font-mono">Canopy Integrity:</strong> <span id="diag-integrity">Continuous dense crown structure detected.</span></div>
+              <div><strong class="text-primary font-mono">Canopy Density Class:</strong> <span id="diag-density-class">Dense Crown (>70%)</span></div>
+              <div><strong class="text-secondary font-mono">Canopy Integrity:</strong> <span id="diag-integrity">Continuous dense crown structure detected.</span></div>
               <div><strong class="text-tertiary font-mono">Drivers & Dynamics:</strong> <span id="diag-drivers">Natural moisture transpiration cycling active.</span></div>
-              <div><strong class="text-secondary font-mono">Protocol:</strong> <span id="diag-protocol">Scheduled satellite pass tracking confirmed.</span></div>
+              <div><strong class="text-error font-mono">Carbon Vulnerability:</strong> <span id="diag-carbon-risk">Minimal</span></div>
+              <div><strong class="text-amber-400 font-mono">Biodiversity Impact:</strong> <span id="diag-bio-threat">Preserved habitat corridors</span></div>
+              <div><strong class="text-secondary font-mono">Stewardship Protocol:</strong> <span id="diag-protocol">Scheduled satellite pass tracking confirmed.</span></div>
             </div>
           </div>
         </div>

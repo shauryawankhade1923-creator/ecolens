@@ -581,15 +581,17 @@ async def analyze_forest(file: UploadFile = File(...)):
 @app.post("/api/species/identify")
 @app.post("/species/identify")
 @app.post("/identify")
-async def identify_species(file: UploadFile = File(...), species_type: str = Form("plant")):
+async def identify_species(request: Request, file: UploadFile = File(...), species_type: str = Form("plant")):
     contents = await file.read()
     try:
         img = Image.open(io.BytesIO(contents)).convert("RGB")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
 
-    gemini_key = API_KEYS.get("gemini")
-    plantnet_key = API_KEYS.get("plantnet")
+    header_gem = request.headers.get("x-gemini-key", "").strip()
+    header_pnet = request.headers.get("x-plantnet-key", "").strip()
+    gemini_key = header_gem or API_KEYS.get("gemini")
+    plantnet_key = header_pnet or API_KEYS.get("plantnet")
 
     # Botanical Pl@ntNet API
     if species_type.lower() == "plant" and plantnet_key:
@@ -648,15 +650,22 @@ async def identify_species(file: UploadFile = File(...), species_type: str = For
                 "clean_speech": clean_for_speech(f"{name}, scientific name {sci}. Found in {profile.get('region', 'native ecosystems')}. Status: {profile.get('conservation', 'monitored')}.")
             }
         except Exception as e:
+            err_str = str(e)
             print(f"[Gemini Vision Vercel] Error: {e}")
+            if "401" in err_str or "unauthenticated" in err_str.lower():
+                msg = "Gemini API key is invalid or not activated. Please click the Settings gear (⚙️) in the top bar to enter your valid Gemini API key (starts with AIzaSy...)."
+            elif "429" in err_str or "quota" in err_str.lower():
+                msg = "Gemini API quota exceeded for current model. Please try again shortly."
+            else:
+                msg = f"Gemini Vision error: {e}"
             return {
                 "status": "error",
                 "engine": "Google Gemini Vision Error",
-                "species_name": "Identification Failed",
-                "scientific_name": str(e),
+                "species_name": "API Key Required",
+                "scientific_name": "Authentication (401)",
                 "confidence": 0.0,
-                "profile": {"facts": f"Error: {e}"},
-                "clean_speech": f"Could not identify the species due to: {e}"
+                "profile": {"family": "Configuration Required", "habitat": "Settings Menu (⚙️)", "region": "Global", "conservation": "Action Needed", "threats": "Unauthenticated", "facts": msg},
+                "clean_speech": msg
             }
 
     fallback_name = "Giant Maidenhair Fern" if species_type.lower() == "plant" else "Bengal Tiger"

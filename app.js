@@ -328,6 +328,12 @@ function displaySpeciesResult(data) {
   const card = document.getElementById('species-result-card');
   card.classList.remove('hidden');
 
+  if (data.status === 'error') {
+    if (confirm(data.clean_speech + '\n\nWould you like to open Settings now to enter your Gemini API key?')) {
+      openApiModal();
+    }
+  }
+
   document.getElementById('spec-name').textContent = data.species_name;
   document.getElementById('spec-sci').textContent = data.scientific_name;
   document.getElementById('spec-conf').textContent = `${data.confidence}%`;

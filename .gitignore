@@ -31,3 +31,12 @@ temp_plot.png
 # OS Generated
 .DS_Store
 Thumbs.db
+
+# Local desktop & non-Vercel assets
+app.py
+server.py
+ecolens/
+run_ecolens.bat
+run_ecolens.ps1
+ui_designs/
+web/

@@ -1,1 +1,40 @@
-{"rewrites":[{"source":"/api/(.*)","destination":"/api/index.py"},{"source":"/","destination":"/index.html"}]}
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/species/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/species",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/forest/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/voice/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/config/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/identify",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/analyze",
+      "destination": "/api/index.py"
+    }
+  ]
+}

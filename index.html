@@ -165,7 +165,59 @@
       border-color: var(--color-secondary) !important;
       box-shadow: 0 0 12px rgba(78, 222, 163, 0.35);
     }
+    /* Leaflet Custom Biosphere Dark Theme */
+    .leaflet-container {
+      background: #0d1512 !important;
+      font-family: inherit;
+    }
+    .leaflet-popup-content-wrapper {
+      background: #16241f !important;
+      color: #e2e8f0 !important;
+      border: 1px solid rgba(52, 211, 153, 0.3) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+    }
+    .leaflet-popup-tip {
+      background: #16241f !important;
+    }
+    .leaflet-bar a {
+      background-color: #1a2a24 !important;
+      border-color: #2a3e35 !important;
+      color: #34d399 !important;
+    }
+    .leaflet-bar a:hover {
+      background-color: #243830 !important;
+      color: #10b981 !important;
+    }
+    .pulsing-beacon-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .beacon-core {
+      width: 14px;
+      height: 14px;
+      background: #10b981;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+    }
+    .beacon-ring {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border: 2px solid #34d399;
+      border-radius: 50%;
+      animation: beacon-pulse 2s infinite ease-out;
+    }
+    @keyframes beacon-pulse {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
   </style>
+  <!-- Leaflet.js Interactive Mapping Library -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 
 <body class="bg-surface text-on-surface flex flex-col min-h-screen">
@@ -699,6 +751,48 @@
               <p id="spec-facts" class="text-xs text-on-surface leading-relaxed mt-0.5">
                 Leaves possess superhydrophobic micro-papillae that shed torrential rains without cellular damage.
               </p>
+            </div>
+          </div>
+
+                    <!-- Geographic Distribution & Native Range Map Card -->
+          <div class="flex flex-col gap-3 p-4 rounded-xl bg-surface-container-low border border-surface-container-highest/40">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-secondary text-[20px]">public</span>
+                <div>
+                  <h4 class="font-headline text-sm font-bold text-on-surface">Geographic Distribution & Native Range</h4>
+                  <p id="species-range-summary" class="text-[11px] text-on-surface-variant">Strictly mapped natural occurrence zones & verified regional habitats</p>
+                </div>
+              </div>
+              <div id="species-range-badge" class="px-2.5 py-1 rounded-full bg-secondary/15 text-secondary font-mono text-[11px] font-semibold border border-secondary/30">
+                Native Range
+              </div>
+            </div>
+
+            <!-- Interactive Leaflet Map Viewport -->
+            <div class="relative w-full h-[320px] rounded-xl overflow-hidden border border-surface-container-highest/60 bg-[#0a0f0d]">
+              <div id="species-range-map" class="w-full h-full z-0"></div>
+              
+              <!-- Floating Map Legend -->
+              <div class="absolute bottom-3 left-3 bg-surface-container-lowest/90 backdrop-blur-md px-3 py-2 rounded-lg border border-surface-container-highest/50 text-[11px] flex flex-col gap-1 z-10 shadow-lg pointer-events-none">
+                <div class="flex items-center gap-1.5 font-mono text-[10px] text-on-surface-variant uppercase font-bold">Range Legend</div>
+                <div class="flex items-center gap-2 text-on-surface">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_8px_#10b981]"></span>
+                  <span>Primary Native Range</span>
+                </div>
+                <div class="flex items-center gap-2 text-on-surface">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b] shadow-[0_0_8px_#f59e0b]"></span>
+                  <span>Known Habitat / Corridor</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clickable Regional Presence Pills -->
+            <div class="flex flex-col gap-1.5 pt-1">
+              <span class="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Documented Regions (Click to Focus)</span>
+              <div class="flex flex-wrap items-center gap-1.5" id="species-region-pills">
+                <span class="px-2.5 py-1 rounded-lg bg-surface-container text-xs text-on-surface-variant font-mono">Loading geographic zones...</span>
+              </div>
             </div>
           </div>
 

@@ -174,9 +174,14 @@ function renderSpeciesGrid(speciesList) {
       </div>
       <div class="mt-2 pt-2 border-t border-surface-container-highest/20 flex justify-between items-center">
         <span class="text-[11px] text-on-surface-variant line-clamp-1">${sp.facts || ''}</span>
-        <button onclick="selectSubjectForVoice('${sp.name.replace(/'/g, "\\'")}')" class="shrink-0 px-2 py-1 rounded bg-surface-container-high hover:bg-primary/20 text-primary text-[10px] font-mono flex items-center gap-1">
-          <span class="material-symbols-outlined text-[12px]">mic</span> Ask AI
-        </button>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button onclick="viewSpeciesDistributionDetails('${sp.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-secondary/15 hover:bg-secondary/25 text-secondary text-[10px] font-mono flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px]">public</span> Map
+          </button>
+          <button onclick="selectSubjectForVoice('${sp.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-surface-container-high hover:bg-primary/20 text-primary text-[10px] font-mono flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px]">mic</span> Ask AI
+          </button>
+        </div>
       </div>
     `;
     container.appendChild(card);
@@ -468,6 +473,216 @@ async function processAndIdentifyFile(file) {
   }
 }
 
+// ============================================================
+// GEOGRAPHIC DISTRIBUTION LEAFLET MAP
+// ============================================================
+let speciesMap = null;
+let speciesMarkersLayer = null;
+
+function renderSpeciesDistributionMap(distribution, speciesName) {
+  const mapElement = document.getElementById('species-range-map');
+  if (!mapElement) return;
+
+  if (typeof L === 'undefined') {
+    console.warn('Leaflet.js not loaded yet');
+    return;
+  }
+
+  // Initialize map if not yet created
+  if (!speciesMap) {
+    speciesMap = L.map('species-range-map', {
+      zoomControl: true,
+      scrollWheelZoom: false,
+      attributionControl: false
+    }).setView([20, 0], 2);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 18,
+      subdomains: 'abcd',
+      attribution: '&copy; CartoDB'
+    }).addTo(speciesMap);
+
+    speciesMarkersLayer = L.layerGroup().addTo(speciesMap);
+  }
+
+  // Clear previous markers & overlays
+  if (speciesMarkersLayer) {
+    speciesMarkersLayer.clearLayers();
+  }
+
+  // Invalidate size to ensure Leaflet renders properly inside previously hidden card
+  setTimeout(() => {
+    if (speciesMap) {
+      speciesMap.invalidateSize();
+    }
+  }, 200);
+
+  // Default fallback if distribution is missing
+  if (!distribution) {
+    distribution = {
+      species_name: speciesName || 'Specimen',
+      summary: 'Distribution coordinates resolving for this specimen.',
+      range_type: 'Monitored Range',
+      locations: []
+    };
+  }
+
+  // Update summary & badge
+  const summaryEl = document.getElementById('species-range-summary');
+  if (summaryEl) {
+    summaryEl.textContent = distribution.summary || `Native range and occurrence zones for ${speciesName || 'specimen'}`;
+  }
+  const badgeEl = document.getElementById('species-range-badge');
+  if (badgeEl) {
+    badgeEl.textContent = distribution.range_type || 'IUCN Range';
+  }
+
+  const locations = distribution.locations || [];
+  const pillsContainer = document.getElementById('species-region-pills');
+  if (pillsContainer) {
+    pillsContainer.innerHTML = '';
+  }
+
+  if (locations.length === 0) {
+    if (pillsContainer) {
+      pillsContainer.innerHTML = '<span class="text-xs text-on-surface-variant italic">No specific regional coordinates mapped for this specimen.</span>';
+    }
+    speciesMap.setView([20, 0], 2);
+    return;
+  }
+
+  const latLngs = [];
+
+  locations.forEach((loc, index) => {
+    const lat = loc.lat;
+    const lng = loc.lng;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+    latLngs.push([lat, lng]);
+
+    // Custom glowing beacon icon
+    const isPrimary = index === 0;
+    const markerHtml = `
+      <div class="pulsing-beacon-marker" style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+        <div class="beacon-ring" style="border-color: ${isPrimary ? '#10b981' : '#f59e0b'};"></div>
+        <div class="beacon-core" style="background: ${isPrimary ? '#10b981' : '#f59e0b'}; box-shadow: 0 0 10px ${isPrimary ? '#10b981' : '#f59e0b'};"></div>
+      </div>
+    `;
+
+    const beaconIcon = L.divIcon({
+      className: 'custom-beacon',
+      html: markerHtml,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -16]
+    });
+
+    const marker = L.marker([lat, lng], { icon: beaconIcon });
+
+    // Rich popup content
+    const popupHtml = `
+      <div style="min-width: 180px; padding: 4px 2px;">
+        <div style="font-weight: 700; color: #34d399; font-size: 13px; margin-bottom: 2px;">
+          ${loc.name || loc.region || 'Region'}
+        </div>
+        <div style="color: #94a3b8; font-size: 11px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+          <span>📍 ${loc.country || 'Global'}</span> • 
+          <span style="color: #fbbf24; font-weight: 600;">${loc.type || 'Native Range'}</span>
+        </div>
+        ${loc.habitat ? `<div style="color: #cbd5e1; font-size: 11px; margin-bottom: 4px;"><strong>Habitat:</strong> ${loc.habitat}</div>` : ''}
+        ${loc.description ? `<div style="color: #94a3b8; font-size: 11px;">${loc.description}</div>` : ''}
+        <div style="margin-top: 6px; font-size: 10px; color: #6ee7b7; font-family: monospace;">
+          Geo: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°
+        </div>
+      </div>
+    `;
+    marker.bindPopup(popupHtml);
+    speciesMarkersLayer.addLayer(marker);
+
+    // Range buffer radius
+    const radiusKm = loc.radius_km || 150;
+    const circle = L.circle([lat, lng], {
+      radius: radiusKm * 1000,
+      color: isPrimary ? '#10b981' : '#f59e0b',
+      weight: 1.5,
+      opacity: 0.8,
+      fillColor: isPrimary ? '#10b981' : '#f59e0b',
+      fillOpacity: 0.12
+    });
+    speciesMarkersLayer.addLayer(circle);
+
+    // Clickable region pill
+    if (pillsContainer) {
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-surface-container-highest/40 hover:border-primary/50 text-xs text-on-surface flex items-center gap-1.5 transition-all cursor-pointer';
+      pill.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${isPrimary ? 'bg-primary' : 'bg-amber-400'}"></span>
+        <span class="font-medium">${loc.name || loc.region}</span>
+        <span class="text-[10px] text-on-surface-variant font-mono">(${loc.country})</span>
+      `;
+      pill.onclick = () => {
+        if (speciesMap) {
+          speciesMap.flyTo([lat, lng], 6, { duration: 1.2 });
+          marker.openPopup();
+        }
+      };
+      pillsContainer.appendChild(pill);
+    }
+  });
+
+  // Fit bounds to show all markers
+  if (latLngs.length > 1) {
+    const bounds = L.latLngBounds(latLngs);
+    speciesMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 6 });
+  } else if (latLngs.length === 1) {
+    speciesMap.setView(latLngs[0], 5);
+  }
+}
+
+async function viewSpeciesDistributionDetails(name) {
+  navigate('scanner');
+  const loading = document.getElementById('species-loading');
+  if (loading) loading.classList.remove('hidden');
+  try {
+    const res = await fetch(`${API_BASE}/api/species/${encodeURIComponent(name)}`);
+    if (!res.ok) throw new Error('Failed to load species data');
+    const d = await res.json();
+    const data = {
+      status: 'success',
+      species_name: d.name,
+      scientific_name: d.details ? d.details.scientific_name : '',
+      confidence: 100,
+      profile: d.details || {},
+      distribution: d.distribution,
+      clean_speech: `${d.name}, scientific name ${d.details ? d.details.scientific_name : ''}. Found in ${d.details ? d.details.region : 'native habitats'}.`
+    };
+    displaySpeciesResult(data);
+    const card = document.getElementById('species-result-card');
+    if (card) {
+      card.classList.remove('hidden');
+      setTimeout(() => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  } catch (err) {
+    console.error('Error opening species details:', err);
+    const local = allSpecies.find(s => s.name.toLowerCase() === name.toLowerCase());
+    if (local) {
+      displaySpeciesResult({
+        status: 'success',
+        species_name: local.name,
+        scientific_name: local.scientific_name,
+        confidence: 100,
+        profile: local,
+        clean_speech: `${local.name}. Found in ${local.region}.`
+      });
+    }
+  } finally {
+    if (loading) loading.classList.add('hidden');
+  }
+}
+
 function displaySpeciesResult(data) {
   const card = document.getElementById('species-result-card');
   card.classList.remove('hidden');
@@ -496,6 +711,9 @@ function displaySpeciesResult(data) {
 
   currentSpeechText = data.clean_speech || `${data.species_name}, scientific name ${data.scientific_name}. Found in ${p.region}.`;
   document.getElementById('speech-narration-status').textContent = `Ready: ${data.species_name}`;
+
+  // Render Geographic Range Map
+  renderSpeciesDistributionMap(data.distribution, data.species_name);
 
   // Automatically update active context in voice assistant
   changeVoiceSubject(data.species_name);

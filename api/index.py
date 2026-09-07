@@ -28,6 +28,12 @@ except ImportError:
     SPECIES_DATABASE = {}
     SPECIES_NAME_MAP = {}
 
+try:
+    from species_geography import get_species_distribution
+except ImportError:
+    def get_species_distribution(name, sci=None, region=None, dyn=None):
+        return {"species_name": name, "locations": []}
+
 # ============================================================
 # APP CONFIGURATION
 # ============================================================
@@ -202,7 +208,8 @@ def query_gemini_vision(image: Image.Image, species_type: str, api_key: str):
         '"conservation": "IUCN status", "conserved": true/false, '
         '"estimated_population": "number or N/A", '
         '"ecological_role": "...", "importance": "...", '
-        '"threats": "...", "facts": "one short fact"}'
+        '"threats": "...", "facts": "one short fact", '
+        '"distribution_regions": [{"name": "Specific Region", "country": "Country", "lat": 0.0, "lng": 0.0, "type": "Native Range"}]}'
     )
 
     payload = {
@@ -533,7 +540,8 @@ def get_species_detail(species_name: str):
             data = SPECIES_DATABASE.get(mapped)
     if not data:
         raise HTTPException(status_code=404, detail="Species not found in database.")
-    return {"name": species_name, "details": data}
+    dist = get_species_distribution(species_name, data.get("scientific_name", ""), data.get("region", ""))
+    return {"name": species_name, "details": data, "distribution": dist}
 
 @app.post("/api/forest/analyze")
 @app.post("/forest/analyze")
@@ -624,6 +632,7 @@ async def identify_species(request: Request, file: UploadFile = File(...), speci
                                 break
 
                     if db_entry:
+                        dist = get_species_distribution(disp_name, db_entry.get("scientific_name", sci_name), db_entry.get("region", ""))
                         return {
                             "status": "success",
                             "engine": "Pl@ntNet Taxonomy API + Verified Database",
@@ -631,6 +640,7 @@ async def identify_species(request: Request, file: UploadFile = File(...), speci
                             "scientific_name": db_entry.get("scientific_name", sci_name),
                             "confidence": score,
                             "profile": db_entry,
+                            "distribution": dist,
                             "clean_speech": clean_for_speech(f"{disp_name}, scientific name {sci_name}. Found in {db_entry.get('region', 'various regions')}. Conservation status: {db_entry.get('conservation', 'monitored')}.")
                         }
         except Exception as e:
@@ -642,6 +652,7 @@ async def identify_species(request: Request, file: UploadFile = File(...), speci
             profile = query_gemini_vision(img, species_type, gemini_key)
             name = profile.get("species_name", "Identified Specimen")
             sci = profile.get("scientific_name", "Taxon")
+            dist = get_species_distribution(name, sci, profile.get("region", ""), profile.get("distribution_regions", []))
             return {
                 "status": "success",
                 "engine": "Google Gemini Vision Intelligence",
@@ -649,6 +660,7 @@ async def identify_species(request: Request, file: UploadFile = File(...), speci
                 "scientific_name": sci,
                 "confidence": 97.4,
                 "profile": profile,
+                "distribution": dist,
                 "clean_speech": clean_for_speech(f"{name}, scientific name {sci}. Found in {profile.get('region', 'native ecosystems')}. Status: {profile.get('conservation', 'monitored')}.")
             }
         except Exception as e:
@@ -672,6 +684,7 @@ async def identify_species(request: Request, file: UploadFile = File(...), speci
 
     fallback_name = "Giant Maidenhair Fern" if species_type.lower() == "plant" else "Bengal Tiger"
     data = SPECIES_DATABASE.get(fallback_name, {})
+    dist = get_species_distribution(fallback_name, data.get("scientific_name", ""), data.get("region", ""))
     return {
         "status": "success",
         "engine": "Offline Specimen Archetype",
@@ -679,6 +692,7 @@ async def identify_species(request: Request, file: UploadFile = File(...), speci
         "scientific_name": data.get("scientific_name", "Taxon"),
         "confidence": 98.2,
         "profile": data,
+        "distribution": dist,
         "clean_speech": clean_for_speech(f"{fallback_name}. Found in {data.get('region')}. Conservation status: {data.get('conservation')}.")
     }
 

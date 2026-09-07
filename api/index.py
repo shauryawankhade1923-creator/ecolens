@@ -41,14 +41,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.middleware("http")
-async def rewrite_path_middleware(request: Request, call_next):
-    override_path = request.query_params.get("path")
-    if override_path:
-        if not override_path.startswith("/"):
-            override_path = "/" + override_path
-        request.scope["path"] = override_path
-    return await call_next(request)
 
 
 @app.exception_handler(404)

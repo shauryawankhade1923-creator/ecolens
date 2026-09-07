@@ -13,7 +13,7 @@ from PIL import Image
 import requests
 from pydantic import BaseModel
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, Response
 
@@ -40,6 +40,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Not Found",
+            "received_path": request.url.path,
+            "scope_path": request.scope.get("path"),
+            "root_path": request.scope.get("root_path"),
+            "method": request.method
+        }
+    )
+
 
 API_KEYS = {
     "gemini": os.environ.get("GEMINI_API_KEY", "") or "AQ.Ab8RN6KN0p9a6lSyQD5oO6kpRYWMm5DmuCDrLyDdIPXotCzHRg",
@@ -677,9 +691,5 @@ def update_keys(req: KeyConfigRequest):
         API_KEYS["plantnet"] = req.plantnet_key.strip()
     return {"status": "success", "gemini_set": bool(API_KEYS.get("gemini")), "plantnet_set": bool(API_KEYS.get("plantnet"))}
 
-try:
-    from mangum import Mangum
-    handler = Mangum(app)
-except Exception:
-    handler = app
+# Vercel natively uses FastAPI app directly
 

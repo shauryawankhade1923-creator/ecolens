@@ -50,7 +50,7 @@ async def custom_404_handler(request: Request, exc):
             "received_path": request.url.path,
             "scope_path": request.scope.get("path"),
             "root_path": request.scope.get("root_path"),
-            "method": request.method
+            "method": request.method, "headers": dict(request.headers)
         }
     )
 

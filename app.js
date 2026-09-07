@@ -432,7 +432,7 @@ async function processAndIdentifyFile(file) {
   const pnetKey = localStorage.getItem('ecolens_plantnet_key') || '';
 
   try {
-    let res = await fetch(${API_BASE}/api/species/identify, {
+    let res = await fetch(`${API_BASE}/api/species/identify`, {
       method: 'POST',
       headers: {
         'x-gemini-key': gemKey,

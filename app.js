@@ -27,8 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   const gemInput = document.getElementById('input-gemini-key');
   const pnetInput = document.getElementById('input-plantnet-key');
+  const gmapInput = document.getElementById('input-gmaps-key');
   if (gemInput) gemInput.value = localStorage.getItem('ecolens_gemini_key') || '';
   if (pnetInput) pnetInput.value = localStorage.getItem('ecolens_plantnet_key') || '';
+  if (gmapInput) gmapInput.value = localStorage.getItem('ecolens_gmaps_key') || '';
 
   fetchHealthStatus();
   fetchSpeciesDatabase();
@@ -474,50 +476,82 @@ async function processAndIdentifyFile(file) {
 }
 
 // ============================================================
-// GEOGRAPHIC DISTRIBUTION LEAFLET MAP
+// GEOGRAPHIC DISTRIBUTION: GOOGLE MAPS PLATFORM & LEAFLET
 // ============================================================
+let currentMapMode = 'satellite'; // 'satellite' (Google Hybrid), 'terrain' (Google Terrain), 'leaflet' (Dark)
+let activeDistributionData = null;
+let activeDistributionSpecies = '';
+
+// Leaflet state
 let speciesMap = null;
 let speciesMarkersLayer = null;
 
+// Google Maps state
+let gmap = null;
+let gmapMarkers = [];
+let gmapCircles = [];
+let gmapsScriptLoaded = false;
+let gmapsLoadingPromise = null;
+
+function switchMapProvider(mode) {
+  currentMapMode = mode;
+  
+  const btnSat = document.getElementById('btn-map-satellite');
+  const btnTer = document.getElementById('btn-map-terrain');
+  const btnLeaf = document.getElementById('btn-map-leaflet');
+  const statusText = document.getElementById('gmaps-status-text');
+
+  const activeClass = 'px-2.5 py-1 rounded-md bg-secondary text-on-secondary font-semibold flex items-center gap-1 transition-all';
+  const inactiveClass = 'px-2.5 py-1 rounded-md text-on-surface-variant hover:text-on-surface flex items-center gap-1 transition-all';
+
+  if (btnSat) btnSat.className = mode === 'satellite' ? activeClass : inactiveClass;
+  if (btnTer) btnTer.className = mode === 'terrain' ? activeClass : inactiveClass;
+  if (btnLeaf) btnLeaf.className = mode === 'leaflet' ? activeClass : inactiveClass;
+
+  if (statusText) {
+    if (mode === 'satellite') statusText.textContent = 'Google Maps Satellite';
+    else if (mode === 'terrain') statusText.textContent = 'Google Maps Terrain';
+    else statusText.textContent = 'EcoLens Dark Biosphere';
+  }
+
+  renderSpeciesDistributionMap(activeDistributionData, activeDistributionSpecies);
+}
+
+function loadGoogleMapsSdk() {
+  if (window.google && window.google.maps) {
+    gmapsScriptLoaded = true;
+    return Promise.resolve(window.google.maps);
+  }
+  if (gmapsLoadingPromise) return gmapsLoadingPromise;
+
+  const apiKey = (localStorage.getItem('ecolens_gmaps_key') || '').trim();
+  if (!apiKey) {
+    return Promise.reject(new Error('MISSING_KEY'));
+  }
+
+  gmapsLoadingPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.id = 'gmaps-platform-sdk';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&libraries=marker,places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      gmapsScriptLoaded = true;
+      resolve(window.google.maps);
+    };
+    script.onerror = (e) => {
+      gmapsLoadingPromise = null;
+      reject(new Error('FAILED_TO_LOAD'));
+    };
+    document.head.appendChild(script);
+  });
+  return gmapsLoadingPromise;
+}
+
 function renderSpeciesDistributionMap(distribution, speciesName) {
-  const mapElement = document.getElementById('species-range-map');
-  if (!mapElement) return;
+  activeDistributionData = distribution;
+  activeDistributionSpecies = speciesName;
 
-  if (typeof L === 'undefined') {
-    console.warn('Leaflet.js not loaded yet');
-    return;
-  }
-
-  // Initialize map if not yet created
-  if (!speciesMap) {
-    speciesMap = L.map('species-range-map', {
-      zoomControl: true,
-      scrollWheelZoom: false,
-      attributionControl: false
-    }).setView([20, 0], 2);
-
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 18,
-      subdomains: 'abcd',
-      attribution: '&copy; CartoDB'
-    }).addTo(speciesMap);
-
-    speciesMarkersLayer = L.layerGroup().addTo(speciesMap);
-  }
-
-  // Clear previous markers & overlays
-  if (speciesMarkersLayer) {
-    speciesMarkersLayer.clearLayers();
-  }
-
-  // Invalidate size to ensure Leaflet renders properly inside previously hidden card
-  setTimeout(() => {
-    if (speciesMap) {
-      speciesMap.invalidateSize();
-    }
-  }, 200);
-
-  // Default fallback if distribution is missing
   if (!distribution) {
     distribution = {
       species_name: speciesName || 'Specimen',
@@ -537,21 +571,222 @@ function renderSpeciesDistributionMap(distribution, speciesName) {
     badgeEl.textContent = distribution.range_type || 'IUCN Range';
   }
 
-  const locations = distribution.locations || [];
-  const pillsContainer = document.getElementById('species-region-pills');
-  if (pillsContainer) {
-    pillsContainer.innerHTML = '';
+  const gmapEl = document.getElementById('species-gmap');
+  const leafletEl = document.getElementById('species-range-map');
+
+  if (currentMapMode === 'leaflet') {
+    if (gmapEl) gmapEl.classList.add('hidden');
+    if (leafletEl) leafletEl.classList.remove('hidden');
+    renderLeafletMap(distribution, speciesName);
+  } else {
+    // Google Maps Satellite or Terrain
+    loadGoogleMapsSdk().then((maps) => {
+      if (gmapEl) gmapEl.classList.remove('hidden');
+      if (leafletEl) leafletEl.classList.add('hidden');
+      renderGoogleMap(distribution, speciesName, currentMapMode);
+    }).catch((err) => {
+      console.warn('Google Maps unavailable:', err.message);
+      // Display friendly prompt in gmap viewport if user explicitly picked satellite
+      if (gmapEl && err.message === 'MISSING_KEY') {
+        gmapEl.classList.remove('hidden');
+        if (leafletEl) leafletEl.classList.add('hidden');
+        gmapEl.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center p-6 text-center bg-[#0d1512] text-on-surface gap-3">
+            <span class="material-symbols-outlined text-secondary text-4xl">satellite_alt</span>
+            <div class="font-bold text-sm">Google Maps Satellite Ready</div>
+            <p class="text-xs text-on-surface-variant max-w-sm">
+              To render real-time Google Maps Satellite and Terrain imagery, enter your Google Maps API Key or grab a free Maps Demo Key in Settings (⚙️).
+            </p>
+            <div class="flex items-center gap-2 mt-1">
+              <button onclick="openApiModal()" class="px-3.5 py-1.5 rounded-lg bg-secondary text-on-secondary text-xs font-semibold flex items-center gap-1 shadow">
+                <span class="material-symbols-outlined text-[14px]">key</span> Enter API Key
+              </button>
+              <button onclick="switchMapProvider('leaflet')" class="px-3.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-xs font-semibold border border-surface-container-highest">
+                Use Biosphere Dark Map
+              </button>
+            </div>
+          </div>
+        `;
+        // Also populate region pills so they work and link to Google Maps directly
+        renderRegionPills(distribution.locations || [], null, null);
+      } else {
+        // Fallback to Leaflet
+        if (gmapEl) gmapEl.classList.add('hidden');
+        if (leafletEl) leafletEl.classList.remove('hidden');
+        renderLeafletMap(distribution, speciesName);
+      }
+    });
+  }
+}
+
+function renderGoogleMap(distribution, speciesName, mode) {
+  const gmapEl = document.getElementById('species-gmap');
+  if (!gmapEl) return;
+
+  const mapTypeId = mode === 'terrain' ? google.maps.MapTypeId.TERRAIN : google.maps.MapTypeId.HYBRID;
+
+  if (!gmap) {
+    gmap = new google.maps.Map(gmapEl, {
+      center: { lat: 20, lng: 0 },
+      zoom: 2,
+      mapTypeId: mapTypeId,
+      mapId: 'DEMO_MAP_ID',
+      fullscreenControl: true,
+      streetViewControl: true,
+      mapTypeControl: false,
+      zoomControl: true
+    });
+  } else {
+    gmap.setMapTypeId(mapTypeId);
   }
 
+  // Clear existing markers and circles
+  gmapMarkers.forEach(m => {
+    if (m.setMap) m.setMap(null);
+    else if (m.map) m.map = null;
+  });
+  gmapMarkers = [];
+  gmapCircles.forEach(c => c.setMap(null));
+  gmapCircles = [];
+
+  const locations = distribution.locations || [];
   if (locations.length === 0) {
-    if (pillsContainer) {
-      pillsContainer.innerHTML = '<span class="text-xs text-on-surface-variant italic">No specific regional coordinates mapped for this specimen.</span>';
+    gmap.setCenter({ lat: 20, lng: 0 });
+    gmap.setZoom(2);
+    renderRegionPills([], gmap, null);
+    return;
+  }
+
+  const bounds = new google.maps.LatLngBounds();
+  const infoWindow = new google.maps.InfoWindow();
+
+  locations.forEach((loc, index) => {
+    const lat = loc.lat;
+    const lng = loc.lng;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+    bounds.extend({ lat, lng });
+
+    const isPrimary = index === 0;
+
+    // Custom Glowing Beacon Marker for Google Maps
+    const pinElement = document.createElement('div');
+    pinElement.className = 'pulsing-beacon-marker';
+    pinElement.style.cssText = 'position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+    pinElement.innerHTML = `
+      <div class="beacon-ring" style="border-color: ${isPrimary ? '#10b981' : '#f59e0b'};"></div>
+      <div class="beacon-core" style="background: ${isPrimary ? '#10b981' : '#f59e0b'}; box-shadow: 0 0 10px ${isPrimary ? '#10b981' : '#f59e0b'};"></div>
+    `;
+
+    let marker;
+    if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+      marker = new google.maps.marker.AdvancedMarkerElement({
+        map: gmap,
+        position: { lat, lng },
+        title: loc.name || loc.region,
+        content: pinElement
+      });
+      marker.addListener('click', () => {
+        openGmapInfoWindow(infoWindow, loc, marker.position, gmap);
+      });
+    } else {
+      marker = new google.maps.Marker({
+        map: gmap,
+        position: { lat, lng },
+        title: loc.name || loc.region
+      });
+      marker.addListener('click', () => {
+        openGmapInfoWindow(infoWindow, loc, { lat, lng }, gmap);
+      });
     }
+    gmapMarkers.push(marker);
+
+    // Range Buffer Circle
+    const circle = new google.maps.Circle({
+      map: gmap,
+      center: { lat, lng },
+      radius: (loc.radius_km || 150) * 1000,
+      fillColor: isPrimary ? '#10b981' : '#f59e0b',
+      fillOpacity: 0.18,
+      strokeColor: isPrimary ? '#10b981' : '#f59e0b',
+      strokeOpacity: 0.8,
+      strokeWeight: 1.5
+    });
+    gmapCircles.push(circle);
+  });
+
+  if (locations.length > 1) {
+    gmap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
+  } else if (locations.length === 1) {
+    gmap.setCenter({ lat: locations[0].lat, lng: locations[0].lng });
+    gmap.setZoom(6);
+  }
+
+  renderRegionPills(locations, gmap, infoWindow);
+}
+
+function openGmapInfoWindow(infoWindow, loc, position, mapInstance) {
+  const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
+  const content = `
+    <div style="font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.4; color: #1e293b; padding: 4px; max-width: 240px;">
+      <div style="font-weight: 700; color: #059669; font-size: 14px; margin-bottom: 2px;">
+        ${loc.name || loc.region}
+      </div>
+      <div style="color: #64748b; font-size: 11px; margin-bottom: 4px;">
+        📍 ${loc.country || 'Global'} • <strong style="color: #d97706;">${loc.type || 'Native Range'}</strong>
+      </div>
+      ${loc.habitat ? `<div style="color: #334155; font-size: 11px; margin-bottom: 4px;"><strong>Habitat:</strong> ${loc.habitat}</div>` : ''}
+      ${loc.description ? `<div style="color: #475569; font-size: 11px; margin-bottom: 6px;">${loc.description}</div>` : ''}
+      <div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 4px; border-top: 1px solid #e2e8f0; pt-2;">
+        <span style="font-family: monospace; font-size: 10px; color: #64748b;">${loc.lat.toFixed(4)}°, ${loc.lng.toFixed(4)}°</span>
+        <a href="${gmapsUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 2px; padding: 3px 6px; border-radius: 4px; background: #059669; color: #ffffff; text-decoration: none; font-size: 10px; font-weight: bold;">
+          Open 3D ↗
+        </a>
+      </div>
+    </div>
+  `;
+  infoWindow.setContent(content);
+  infoWindow.setPosition(position);
+  infoWindow.open(mapInstance);
+}
+
+function renderLeafletMap(distribution, speciesName) {
+  const mapElement = document.getElementById('species-range-map');
+  if (!mapElement || typeof L === 'undefined') return;
+
+  if (!speciesMap) {
+    speciesMap = L.map('species-range-map', {
+      zoomControl: true,
+      scrollWheelZoom: false,
+      attributionControl: false
+    }).setView([20, 0], 2);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 18,
+      subdomains: 'abcd',
+      attribution: '&copy; CartoDB'
+    }).addTo(speciesMap);
+
+    speciesMarkersLayer = L.layerGroup().addTo(speciesMap);
+  }
+
+  if (speciesMarkersLayer) {
+    speciesMarkersLayer.clearLayers();
+  }
+
+  setTimeout(() => {
+    if (speciesMap) speciesMap.invalidateSize();
+  }, 150);
+
+  const locations = distribution.locations || [];
+  if (locations.length === 0) {
     speciesMap.setView([20, 0], 2);
+    renderRegionPills([], null, null);
     return;
   }
 
   const latLngs = [];
+  const leafletMarkers = [];
 
   locations.forEach((loc, index) => {
     const lat = loc.lat;
@@ -560,49 +795,44 @@ function renderSpeciesDistributionMap(distribution, speciesName) {
 
     latLngs.push([lat, lng]);
 
-    // Custom glowing beacon icon
     const isPrimary = index === 0;
-    const markerHtml = `
-      <div class="pulsing-beacon-marker" style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-        <div class="beacon-ring" style="border-color: ${isPrimary ? '#10b981' : '#f59e0b'};"></div>
-        <div class="beacon-core" style="background: ${isPrimary ? '#10b981' : '#f59e0b'}; box-shadow: 0 0 10px ${isPrimary ? '#10b981' : '#f59e0b'};"></div>
-      </div>
-    `;
-
     const beaconIcon = L.divIcon({
       className: 'custom-beacon',
-      html: markerHtml,
+      html: `
+        <div class="pulsing-beacon-marker" style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+          <div class="beacon-ring" style="border-color: ${isPrimary ? '#10b981' : '#f59e0b'};"></div>
+          <div class="beacon-core" style="background: ${isPrimary ? '#10b981' : '#f59e0b'}; box-shadow: 0 0 10px ${isPrimary ? '#10b981' : '#f59e0b'};"></div>
+        </div>
+      `,
       iconSize: [32, 32],
       iconAnchor: [16, 16],
       popupAnchor: [0, -16]
     });
 
     const marker = L.marker([lat, lng], { icon: beaconIcon });
-
-    // Rich popup content
+    const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     const popupHtml = `
-      <div style="min-width: 180px; padding: 4px 2px;">
+      <div style="min-width: 190px; padding: 4px 2px;">
         <div style="font-weight: 700; color: #34d399; font-size: 13px; margin-bottom: 2px;">
           ${loc.name || loc.region || 'Region'}
         </div>
-        <div style="color: #94a3b8; font-size: 11px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
-          <span>📍 ${loc.country || 'Global'}</span> • 
-          <span style="color: #fbbf24; font-weight: 600;">${loc.type || 'Native Range'}</span>
+        <div style="color: #94a3b8; font-size: 11px; margin-bottom: 6px;">
+          📍 ${loc.country || 'Global'} • <span style="color: #fbbf24; font-weight: 600;">${loc.type || 'Native Range'}</span>
         </div>
         ${loc.habitat ? `<div style="color: #cbd5e1; font-size: 11px; margin-bottom: 4px;"><strong>Habitat:</strong> ${loc.habitat}</div>` : ''}
-        ${loc.description ? `<div style="color: #94a3b8; font-size: 11px;">${loc.description}</div>` : ''}
-        <div style="margin-top: 6px; font-size: 10px; color: #6ee7b7; font-family: monospace;">
-          Geo: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°
+        ${loc.description ? `<div style="color: #94a3b8; font-size: 11px; margin-bottom: 6px;">${loc.description}</div>` : ''}
+        <div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
+          <span style="font-size: 10px; color: #6ee7b7; font-family: monospace;">${lat.toFixed(4)}°, ${lng.toFixed(4)}°</span>
+          <a href="${gmapsUrl}" target="_blank" style="color: #34d399; text-decoration: underline; font-size: 10px; font-weight: 600;">Google Maps ↗</a>
         </div>
       </div>
     `;
     marker.bindPopup(popupHtml);
     speciesMarkersLayer.addLayer(marker);
+    leafletMarkers.push(marker);
 
-    // Range buffer radius
-    const radiusKm = loc.radius_km || 150;
     const circle = L.circle([lat, lng], {
-      radius: radiusKm * 1000,
+      radius: (loc.radius_km || 150) * 1000,
       color: isPrimary ? '#10b981' : '#f59e0b',
       weight: 1.5,
       opacity: 0.8,
@@ -610,36 +840,67 @@ function renderSpeciesDistributionMap(distribution, speciesName) {
       fillOpacity: 0.12
     });
     speciesMarkersLayer.addLayer(circle);
-
-    // Clickable region pill
-    if (pillsContainer) {
-      const pill = document.createElement('button');
-      pill.type = 'button';
-      pill.className = 'px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-surface-container-highest/40 hover:border-primary/50 text-xs text-on-surface flex items-center gap-1.5 transition-all cursor-pointer';
-      pill.innerHTML = `
-        <span class="w-2 h-2 rounded-full ${isPrimary ? 'bg-primary' : 'bg-amber-400'}"></span>
-        <span class="font-medium">${loc.name || loc.region}</span>
-        <span class="text-[10px] text-on-surface-variant font-mono">(${loc.country})</span>
-      `;
-      pill.onclick = () => {
-        if (speciesMap) {
-          speciesMap.flyTo([lat, lng], 6, { duration: 1.2 });
-          marker.openPopup();
-        }
-      };
-      pillsContainer.appendChild(pill);
-    }
   });
 
-  // Fit bounds to show all markers
   if (latLngs.length > 1) {
-    const bounds = L.latLngBounds(latLngs);
-    speciesMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 6 });
+    speciesMap.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40], maxZoom: 6 });
   } else if (latLngs.length === 1) {
     speciesMap.setView(latLngs[0], 5);
   }
+
+  renderRegionPills(locations, null, leafletMarkers);
 }
 
+function renderRegionPills(locations, gmapInstance, leafletMarkers) {
+  const pillsContainer = document.getElementById('species-region-pills');
+  if (!pillsContainer) return;
+
+  pillsContainer.innerHTML = '';
+
+  if (locations.length === 0) {
+    pillsContainer.innerHTML = '<span class="text-xs text-on-surface-variant italic">No specific regional coordinates mapped for this specimen.</span>';
+    return;
+  }
+
+  locations.forEach((loc, index) => {
+    const isPrimary = index === 0;
+    const pill = document.createElement('div');
+    pill.className = 'flex items-center rounded-lg bg-surface-container hover:bg-surface-container-high border border-surface-container-highest/40 hover:border-primary/50 text-xs text-on-surface transition-all overflow-hidden';
+    
+    // Focus button
+    const focusBtn = document.createElement('button');
+    focusBtn.type = 'button';
+    focusBtn.className = 'px-2.5 py-1 flex items-center gap-1.5 cursor-pointer text-left';
+    focusBtn.innerHTML = `
+      <span class="w-2 h-2 rounded-full ${isPrimary ? 'bg-primary' : 'bg-amber-400'}"></span>
+      <span class="font-medium">${loc.name || loc.region}</span>
+      <span class="text-[10px] text-on-surface-variant font-mono">(${loc.country})</span>
+    `;
+    focusBtn.onclick = () => {
+      if (currentMapMode !== 'leaflet' && gmapInstance) {
+        gmapInstance.panTo({ lat: loc.lat, lng: loc.lng });
+        gmapInstance.setZoom(8);
+      } else if (speciesMap) {
+        speciesMap.flyTo([loc.lat, loc.lng], 6, { duration: 1.2 });
+        if (leafletMarkers && leafletMarkers[index]) {
+          leafletMarkers[index].openPopup();
+        }
+      }
+    };
+    pill.appendChild(focusBtn);
+
+    // Direct Google Maps link button
+    const gmapsLink = document.createElement('a');
+    gmapsLink.href = `https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
+    gmapsLink.target = '_blank';
+    gmapsLink.title = 'Open location in Google Maps 3D/Satellite';
+    gmapsLink.className = 'px-2 py-1 bg-surface-container-highest/40 hover:bg-secondary/20 hover:text-secondary text-on-surface-variant border-l border-surface-container-highest/40 flex items-center justify-center transition-colors';
+    gmapsLink.innerHTML = '<span class="material-symbols-outlined text-[13px]">open_in_new</span>';
+    pill.appendChild(gmapsLink);
+
+    pillsContainer.appendChild(pill);
+  });
+}
 async function viewSpeciesDistributionDetails(name) {
   navigate('scanner');
   const loading = document.getElementById('species-loading');
@@ -912,8 +1173,17 @@ function closeApiModal() {
 }
 
 async function saveApiKeys() {
-  const gemini = document.getElementById('input-gemini-key').value;
-  const plantnet = document.getElementById('input-plantnet-key').value;
+  const gemini = document.getElementById('input-gemini-key').value.trim();
+  const plantnet = document.getElementById('input-plantnet-key').value.trim();
+  const gmaps = document.getElementById('input-gmaps-key') ? document.getElementById('input-gmaps-key').value.trim() : '';
+
+  if (gemini) localStorage.setItem('ecolens_gemini_key', gemini);
+  if (plantnet) localStorage.setItem('ecolens_plantnet_key', plantnet);
+  if (gmaps) {
+    localStorage.setItem('ecolens_gmaps_key', gmaps);
+  } else {
+    localStorage.removeItem('ecolens_gmaps_key');
+  }
 
   try {
     const res = await fetch(`${API_BASE}/api/config/keys`, {
@@ -925,13 +1195,17 @@ async function saveApiKeys() {
       })
     });
     const data = await res.json();
-    if (data.status === 'success') {
-      alert('API keys updated successfully!');
-      closeApiModal();
-      fetchHealthStatus();
+    alert('API configuration saved successfully!');
+    closeApiModal();
+    fetchHealthStatus();
+    
+    // Refresh current map if species data is present
+    if (activeDistributionData) {
+      renderSpeciesDistributionMap(activeDistributionData, activeDistributionSpecies);
     }
   } catch (e) {
-    alert('Error saving keys: ' + e.message);
+    alert('Error saving keys to backend: ' + e.message + '\n(Browser local keys saved successfully)');
+    closeApiModal();
   }
 }
 

@@ -67,7 +67,8 @@ DEFAULT_GEMINI_KEY = base64.b64decode("QVEuQWI4Uk42SjJ5dnVBOEl2WTF6WHlKSUk2YzU5S
 
 API_KEYS = {
     "gemini": os.environ.get("GEMINI_API_KEY", "") or DEFAULT_GEMINI_KEY,
-    "plantnet": os.environ.get("PLANTNET_API_KEY", "") or "2b10kU10zzN5T31LX3uKu3Pqsu"
+    "plantnet": os.environ.get("PLANTNET_API_KEY", "") or "2b10kU10zzN5T31LX3uKu3Pqsu",
+    "gmaps": os.environ.get("GOOGLE_MAPS_API_KEY", "")
 }
 
 # Fallback: check .streamlit/secrets.toml if present
@@ -464,6 +465,7 @@ class VoiceQuestionRequest(BaseModel):
 class KeyConfigRequest(BaseModel):
     gemini_key: Optional[str] = None
     plantnet_key: Optional[str] = None
+    gmaps_key: Optional[str] = None
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/index.html", response_class=HTMLResponse)
@@ -706,7 +708,8 @@ def voice_ask(req: VoiceQuestionRequest):
 def get_key_status():
     return {
         "gemini_set": bool(API_KEYS.get("gemini")),
-        "plantnet_set": bool(API_KEYS.get("plantnet"))
+        "plantnet_set": bool(API_KEYS.get("plantnet")),
+        "gmaps_set": bool(API_KEYS.get("gmaps"))
     }
 
 @app.post("/api/config/keys")
@@ -716,7 +719,14 @@ def update_keys(req: KeyConfigRequest):
         API_KEYS["gemini"] = req.gemini_key.strip()
     if req.plantnet_key is not None:
         API_KEYS["plantnet"] = req.plantnet_key.strip()
-    return {"status": "success", "gemini_set": bool(API_KEYS.get("gemini")), "plantnet_set": bool(API_KEYS.get("plantnet"))}
+    if req.gmaps_key is not None:
+        API_KEYS["gmaps"] = req.gmaps_key.strip()
+    return {
+        "status": "success",
+        "gemini_set": bool(API_KEYS.get("gemini")),
+        "plantnet_set": bool(API_KEYS.get("plantnet")),
+        "gmaps_set": bool(API_KEYS.get("gmaps"))
+    }
 
 # Vercel natively uses FastAPI app directly
 

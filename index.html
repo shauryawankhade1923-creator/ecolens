@@ -769,9 +769,33 @@
               </div>
             </div>
 
-            <!-- Interactive Leaflet Map Viewport -->
-            <div class="relative w-full h-[320px] rounded-xl overflow-hidden border border-surface-container-highest/60 bg-[#0a0f0d]">
-              <div id="species-range-map" class="w-full h-full z-0"></div>
+            <!-- Map Mode Selector & Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div class="flex items-center bg-surface-container-high/80 p-1 rounded-lg border border-surface-container-highest/50 font-mono text-[11px]" id="map-engine-tabs">
+                <button type="button" onclick="switchMapProvider('satellite')" id="btn-map-satellite" class="px-2.5 py-1 rounded-md bg-secondary text-on-secondary font-semibold flex items-center gap-1 transition-all">
+                  <span class="material-symbols-outlined text-[14px]">satellite_alt</span> Satellite
+                </button>
+                <button type="button" onclick="switchMapProvider('terrain')" id="btn-map-terrain" class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-on-surface flex items-center gap-1 transition-all">
+                  <span class="material-symbols-outlined text-[14px]">terrain</span> Terrain
+                </button>
+                <button type="button" onclick="switchMapProvider('leaflet')" id="btn-map-leaflet" class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-on-surface flex items-center gap-1 transition-all">
+                  <span class="material-symbols-outlined text-[14px]">dark_mode</span> Dark
+                </button>
+              </div>
+
+              <div id="gmaps-active-indicator" class="flex items-center gap-1.5 text-[11px] text-secondary font-mono">
+                <span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+                <span id="gmaps-status-text">Google Maps Satellite</span>
+              </div>
+            </div>
+
+            <!-- Interactive Map Viewport Container -->
+            <div class="relative w-full h-[340px] rounded-xl overflow-hidden border border-surface-container-highest/60 bg-[#0a0f0d]">
+              <!-- Google Maps Viewport -->
+              <div id="species-gmap" class="w-full h-full z-0"></div>
+
+              <!-- Leaflet Fallback Viewport -->
+              <div id="species-range-map" class="w-full h-full z-0 hidden"></div>
               
               <!-- Floating Map Legend -->
               <div class="absolute bottom-3 left-3 bg-surface-container-lowest/90 backdrop-blur-md px-3 py-2 rounded-lg border border-surface-container-highest/50 text-[11px] flex flex-col gap-1 z-10 shadow-lg pointer-events-none">
@@ -988,6 +1012,16 @@
         <div>
           <label class="font-mono text-[10px] text-on-surface-variant uppercase">Pl@ntNet API Key</label>
           <input type="password" id="input-plantnet-key" placeholder="2b10..." class="w-full bg-surface-container-high rounded-lg px-3 py-2 text-xs border border-surface-container-highest focus:outline-none mt-1"/>
+        </div>
+        <div>
+          <div class="flex items-center justify-between">
+            <label class="font-mono text-[10px] text-on-surface-variant uppercase">Google Maps Platform API Key</label>
+            <a href="https://mapsplatform.google.com/maps-demo-key?utm_campaign=gmp_git_agentskills_v1" target="_blank" class="text-[10px] text-secondary hover:underline flex items-center gap-0.5" title="Free zero-billing prototyping key">
+              Get Demo Key <span class="material-symbols-outlined text-[11px]">open_in_new</span>
+            </a>
+          </div>
+          <input type="password" id="input-gmaps-key" placeholder="AIzaSy... or Maps Demo Key" class="w-full bg-surface-container-high rounded-lg px-3 py-2 text-xs border border-surface-container-highest focus:outline-none mt-1"/>
+          <p class="text-[10px] text-on-surface-variant mt-0.5">Enables high-resolution Google Satellite, Hybrid, and Terrain biome exploration.</p>
         </div>
       </div>
 

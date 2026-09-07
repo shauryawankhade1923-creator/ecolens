@@ -41,6 +41,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def rewrite_path_middleware(request: Request, call_next):
+    override_path = request.query_params.get("path")
+    if override_path:
+        if not override_path.startswith("/"):
+            override_path = "/" + override_path
+        request.scope["path"] = override_path
+    return await call_next(request)
+
+
 @app.exception_handler(404)
 async def custom_404_handler(request: Request, exc):
     return JSONResponse(
@@ -693,3 +703,8 @@ def update_keys(req: KeyConfigRequest):
 
 # Vercel natively uses FastAPI app directly
 
+
+
+@app.get("/api/index.py")
+def handle_index_py_direct():
+    return {"status": "online", "platform": "EcoLens 2.0 Vercel Serverless API"}

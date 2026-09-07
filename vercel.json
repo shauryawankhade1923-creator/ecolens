@@ -2,7 +2,31 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.py"
+      "destination": "/api/index.py?path=/"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/index.py?path=/health"
+    },
+    {
+      "source": "/species/(.*)",
+      "destination": "/api/index.py?path=/species/"
+    },
+    {
+      "source": "/species",
+      "destination": "/api/index.py?path=/species"
+    },
+    {
+      "source": "/forest/(.*)",
+      "destination": "/api/index.py?path=/forest/"
+    },
+    {
+      "source": "/voice/(.*)",
+      "destination": "/api/index.py?path=/voice/"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/index.py?path=/health"
     },
     {
       "source": "/",

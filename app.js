@@ -65,6 +65,8 @@ function navigate(viewName) {
   document.getElementById('view-scanner').classList.add('hidden');
   document.getElementById('view-voice-assistant').classList.add('hidden');
   document.getElementById('view-species-database').classList.add('hidden');
+  const hubView = document.getElementById('view-carbon-hub');
+  if (hubView) hubView.classList.add('hidden');
 
   // Activate target view
   if (viewName === 'dashboard') {
@@ -87,6 +89,13 @@ function navigate(viewName) {
   } else if (viewName === 'species-database') {
     document.getElementById('view-species-database').classList.remove('hidden');
     document.getElementById('active-screen-subtitle').textContent = 'Species Knowledge Base';
+  } else if (viewName === 'carbon-hub') {
+    const hubView = document.getElementById('view-carbon-hub');
+    if (hubView) hubView.classList.remove('hidden');
+    document.getElementById('active-screen-subtitle').textContent = 'Carbon Credit & Climate Finance Hub';
+    if (typeof initStandaloneCarbonHub === 'function') {
+      initStandaloneCarbonHub();
+    }
   }
 
   // Update desktop sidebar buttons
@@ -1602,3 +1611,143 @@ function closeThemeModal() {
   modal.classList.remove('flex');
 }
 
+
+// ============================================================
+// STANDALONE CARBON CREDIT & CLIMATE FINANCE HUB CONTROLLER
+// ============================================================
+let hubHectares = 50;
+let hubPricePerTonne = 30;
+let hubHorizonYears = 5;
+let hubBaseRatePerHa = 25; // 25 t CO2e / ha / year for Tropical Rainforest default
+let currentHubBiome = 'rainforest';
+
+function initStandaloneCarbonHub() {
+  setHubBiome(currentHubBiome, hubBaseRatePerHa);
+  updateHubCarbonROI();
+}
+
+function setHubBiome(biomeKey, rate) {
+  currentHubBiome = biomeKey;
+  hubBaseRatePerHa = rate;
+
+  const biomes = ['mangrove', 'rainforest', 'deciduous', 'semiarid'];
+  biomes.forEach(b => {
+    const card = document.getElementById(`hub-biome-${b}`);
+    if (card) {
+      if (b === biomeKey) {
+        card.className = 'cursor-pointer p-3.5 rounded-xl bg-primary/15 border-2 border-primary flex flex-col gap-1 transition-all shadow-md';
+        const title = card.querySelector('.font-headline');
+        if (title) title.className = 'font-headline font-bold text-xs mt-1 text-primary';
+      } else {
+        card.className = 'cursor-pointer p-3.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-surface-container-highest/40 flex flex-col gap-1 transition-all';
+        const title = card.querySelector('.font-headline');
+        if (title) title.className = 'font-headline font-bold text-xs mt-1 text-on-surface';
+      }
+    }
+  });
+
+  updateHubCarbonROI();
+}
+
+function onHubHectaresInput(val) {
+  const num = Math.max(1, Math.min(1000, parseInt(val) || 1));
+  hubHectares = num;
+  const slider = document.getElementById('hub-hectares-slider');
+  const input = document.getElementById('hub-hectares-input');
+  if (slider && parseInt(slider.value) !== num) slider.value = num;
+  if (input && parseInt(input.value) !== num) input.value = num;
+  updateHubCarbonROI();
+}
+
+function setHubCarbonPrice(price) {
+  hubPricePerTonne = price;
+
+  [15, 30, 50].forEach(p => {
+    const btn = document.getElementById(`hub-btn-price-${p}`);
+    if (btn) {
+      if (p === price) {
+        btn.className = 'px-2 py-2 rounded-xl bg-primary text-on-primary text-xs font-mono font-bold border border-primary transition-all text-center cursor-pointer shadow-md';
+      } else {
+        btn.className = 'px-2 py-2 rounded-xl bg-surface-container-high hover:bg-surface-bright text-on-surface-variant text-xs font-mono border border-surface-container-highest transition-all text-center cursor-pointer';
+      }
+    }
+  });
+
+  const priceText = document.getElementById('hub-active-price-text');
+  if (priceText) {
+    const tierName = price === 15 ? 'Avoidance' : (price === 30 ? 'Removal (Verra)' : 'Bio-ARR Premium');
+    priceText.textContent = `$${price} / t CO2e (${tierName})`;
+  }
+
+  updateHubCarbonROI();
+}
+
+function setHubCarbonHorizon(years) {
+  hubHorizonYears = years;
+
+  [1, 3, 5, 10, 20].forEach(y => {
+    const btn = document.getElementById(`hub-btn-horizon-${y}`);
+    if (btn) {
+      if (y === years) {
+        btn.className = 'px-3.5 py-1.5 rounded-lg bg-secondary text-on-secondary font-bold transition-all cursor-pointer shadow';
+      } else {
+        btn.className = 'px-3.5 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface transition-all cursor-pointer';
+      }
+    }
+  });
+
+  updateHubCarbonROI();
+}
+
+function updateHubCarbonROI() {
+  // Annual sequestration (tonnes of CO2e)
+  const annualSequestration = hubHectares * hubBaseRatePerHa;
+  // Cumulative sequestration over selected horizon
+  const totalSequestration = Math.round(annualSequestration * hubHorizonYears);
+
+  // Financial modeling (USD)
+  const grossRevenue = Math.round(totalSequestration * hubPricePerTonne);
+
+  // Capital & Operational Expenditure
+  const initialPlantingCost = hubHectares * 850; // $850/ha
+  const annualMonitoringCost = hubHectares * 110; // $110/ha/year
+  const totalExpenditure = initialPlantingCost + (annualMonitoringCost * hubHorizonYears);
+
+  const netProfit = Math.max(0, grossRevenue - totalExpenditure);
+
+  // Breakeven / Payback period (years)
+  const annualGross = annualSequestration * hubPricePerTonne;
+  const annualNetCashflow = Math.max(100, annualGross - annualMonitoringCost);
+  const paybackYears = Math.min(20, Math.max(0.8, (initialPlantingCost / annualNetCashflow))).toFixed(1);
+
+  // Projected Internal Rate of Return (IRR estimate)
+  let irrPercent = 0;
+  if (initialPlantingCost > 0) {
+    const annualNetMargin = annualNetCashflow / initialPlantingCost;
+    irrPercent = Math.min(95, Math.max(8.5, (annualNetMargin * 100) - 2.5)).toFixed(1);
+  }
+
+  // Real-world equivalencies (EPA & ICAO standards)
+  const carsRemovedPerYear = Math.round(annualSequestration / 4.6); // 4.6 t CO2e / car / year
+  const flightsOffset = Math.round(totalSequestration / 0.8); // 0.8 t CO2e / passenger flight
+  const waterGainPercent = Math.min(65, Math.round(18 + (hubHectares * 0.12)));
+
+  // Update DOM Elements
+  const elTotalTonnes = document.getElementById('hub-kpi-tonnes');
+  const elGross = document.getElementById('hub-kpi-gross');
+  const elNet = document.getElementById('hub-kpi-net');
+  const elPayback = document.getElementById('hub-kpi-payback');
+  const elIrr = document.getElementById('hub-kpi-irr');
+  const elCars = document.getElementById('hub-eq-cars');
+  const elFlights = document.getElementById('hub-eq-flights');
+  const elWater = document.getElementById('hub-eq-water');
+
+  if (elTotalTonnes) elTotalTonnes.textContent = `${totalSequestration.toLocaleString()} t`;
+  if (elGross) elGross.textContent = `$${grossRevenue.toLocaleString()}`;
+  if (elNet) elNet.textContent = `+$${netProfit.toLocaleString()}`;
+  if (elPayback) elPayback.textContent = `${paybackYears} Years`;
+  if (elIrr) elIrr.textContent = `Projected IRR: ${irrPercent}%`;
+  if (elCars) elCars.textContent = `${carsRemovedPerYear.toLocaleString()} cars/yr`;
+  if (elFlights) elFlights.textContent = `${flightsOffset.toLocaleString()} flights`;
+  if (elWater) elWater.textContent = `+${waterGainPercent}% aquifer recharge`;
+}

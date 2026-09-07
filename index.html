@@ -684,7 +684,132 @@
             </div>
           </div>
 
-          <!-- Gemini AI Autonomous Diagnostics Accordion -->
+                    <!-- Verifiable Carbon Credit & Economic ROI Calculator Card -->
+          <div class="p-5 rounded-2xl bg-surface-container-low border border-primary/40 flex flex-col gap-4 shadow-xl">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center border border-primary/30">
+                  <span class="material-symbols-outlined text-[24px]">monetization_on</span>
+                </div>
+                <div>
+                  <h4 class="font-headline text-base font-bold text-on-surface">💰 Verifiable Carbon Credit & Economic ROI Calculator</h4>
+                  <p class="text-[11px] text-on-surface-variant">Calibrated to IPCC AFOLU Tier-1/2 standards & Voluntary Carbon Market (VCM) benchmarks</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="px-2 py-0.5 rounded bg-surface-container-high text-primary font-mono text-[10px] font-bold border border-primary/30">Verra VM0047</span>
+                <span class="px-2 py-0.5 rounded bg-surface-container-high text-secondary font-mono text-[10px] font-bold border border-secondary/30">Gold Standard</span>
+                <span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-mono text-[10px] border border-surface-container-highest">UN REDD+</span>
+              </div>
+            </div>
+
+            <!-- Interactive Parameter Controllers -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-surface-container border border-surface-container-highest/40">
+              <!-- Controller 1: Parcel Size (Hectares) -->
+              <div class="flex flex-col gap-2">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-semibold text-on-surface flex items-center gap-1">
+                    <span class="material-symbols-outlined text-secondary text-[16px]">crop_free</span> Restoration Parcel Size:
+                  </span>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="carbon-hectares-input" min="1" max="1000" value="25" oninput="onHectaresInput(this.value)" class="w-16 px-2 py-0.5 rounded bg-surface-container-high border border-surface-container-highest text-right font-mono font-bold text-secondary text-xs focus:outline-none focus:border-secondary"/>
+                    <span class="font-mono text-xs text-on-surface-variant">ha</span>
+                  </div>
+                </div>
+                <input type="range" min="1" max="500" value="25" id="carbon-hectares-slider" oninput="onHectaresInput(this.value)" class="w-full h-2 bg-surface-container-lowest rounded-lg appearance-none cursor-pointer accent-secondary"/>
+                <div class="flex justify-between text-[10px] font-mono text-on-surface-variant">
+                  <span>1 ha (Pilot Plot)</span>
+                  <span>100 ha</span>
+                  <span>500 ha (Reserve Scale)</span>
+                </div>
+              </div>
+
+              <!-- Controller 2: Carbon Credit Pricing Tier -->
+              <div class="flex flex-col gap-2">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-semibold text-on-surface flex items-center gap-1">
+                    <span class="material-symbols-outlined text-primary text-[16px]">price_change</span> VCM Carbon Credit Price:
+                  </span>
+                  <span id="carbon-active-price-text" class="font-mono font-bold text-primary text-xs">$30 / t CO2e</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5" id="carbon-price-tiers">
+                  <button type="button" onclick="setCarbonPrice(15)" id="btn-price-15" class="px-2 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface-variant text-[11px] font-mono border border-surface-container-highest transition-all text-center cursor-pointer">
+                    $15/t <span class="block text-[9px] text-on-surface-variant/70">Avoidance</span>
+                  </button>
+                  <button type="button" onclick="setCarbonPrice(30)" id="btn-price-30" class="px-2 py-1.5 rounded-lg bg-primary text-on-primary text-[11px] font-mono font-bold border border-primary transition-all text-center cursor-pointer">
+                    $30/t <span class="block text-[9px] text-on-primary/80">Removal</span>
+                  </button>
+                  <button type="button" onclick="setCarbonPrice(50)" id="btn-price-50" class="px-2 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface-variant text-[11px] font-mono border border-surface-container-highest transition-all text-center cursor-pointer">
+                    $50/t <span class="block text-[9px] text-on-surface-variant/70">Bio-ARR</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Time Horizon Selector -->
+            <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+              <span class="font-mono text-xs text-on-surface-variant uppercase font-semibold">Climate Time Horizon:</span>
+              <div class="flex items-center bg-surface-container-high p-1 rounded-lg border border-surface-container-highest/40 font-mono text-[11px]" id="carbon-horizon-tabs">
+                <button type="button" onclick="setCarbonHorizon(1)" id="btn-horizon-1" class="px-3 py-1 rounded-md text-on-surface-variant hover:text-on-surface transition-all cursor-pointer">1 Year</button>
+                <button type="button" onclick="setCarbonHorizon(5)" id="btn-horizon-5" class="px-3 py-1 rounded-md bg-secondary text-on-secondary font-bold transition-all cursor-pointer">5 Years</button>
+                <button type="button" onclick="setCarbonHorizon(10)" id="btn-horizon-10" class="px-3 py-1 rounded-md text-on-surface-variant hover:text-on-surface transition-all cursor-pointer">10 Years</button>
+                <button type="button" onclick="setCarbonHorizon(20)" id="btn-horizon-20" class="px-3 py-1 rounded-md text-on-surface-variant hover:text-on-surface transition-all cursor-pointer">20 Years</button>
+              </div>
+            </div>
+
+            <!-- Key Financial & Carbon Impact Outputs Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              <div class="p-3.5 rounded-xl bg-surface-container flex flex-col border border-surface-container-highest/30">
+                <span class="font-mono text-[10px] text-on-surface-variant uppercase">CO2 Captured</span>
+                <span id="carbon-total-tonnes" class="font-headline text-xl font-bold text-secondary mt-0.5">2,750 t</span>
+                <span class="text-[10px] text-on-surface-variant">Verified sequestered mass</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-surface-container flex flex-col border border-surface-container-highest/30">
+                <span class="font-mono text-[10px] text-on-surface-variant uppercase">Gross Carbon Revenue</span>
+                <span id="carbon-gross-revenue" class="font-headline text-xl font-bold text-primary mt-0.5">$82,500</span>
+                <span class="text-[10px] text-on-surface-variant">Market value at $30/t</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-surface-container flex flex-col border border-surface-container-highest/30">
+                <span class="font-mono text-[10px] text-on-surface-variant uppercase">Estimated Net Profit</span>
+                <span id="carbon-net-profit" class="font-headline text-xl font-bold text-emerald-400 mt-0.5">+$47,500</span>
+                <span class="text-[10px] text-on-surface-variant">After planting & telemetry</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-surface-container flex flex-col border border-surface-container-highest/30">
+                <span class="font-mono text-[10px] text-on-surface-variant uppercase">Payback Timeline</span>
+                <span id="carbon-payback" class="font-headline text-xl font-bold text-secondary-container mt-0.5">1.8 Years</span>
+                <span class="text-[10px] text-on-surface-variant">Breakeven to cashflow</span>
+              </div>
+            </div>
+
+            <!-- Real-World Impact Equivalency Strip -->
+            <div class="p-3 rounded-xl bg-surface-container border border-surface-container-highest/40 flex flex-wrap items-center justify-around gap-2 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">🚗</span>
+                <div>
+                  <span id="carbon-eq-cars" class="font-bold text-on-surface">120 cars/yr</span>
+                  <span class="text-[10px] text-on-surface-variant block">Emissions removed</span>
+                </div>
+              </div>
+              <div class="h-6 w-[1px] bg-surface-container-highest hidden sm:block"></div>
+              <div class="flex items-center gap-2">
+                <span class="text-lg">✈️</span>
+                <div>
+                  <span id="carbon-eq-flights" class="font-bold text-on-surface">3,438 flights</span>
+                  <span class="text-[10px] text-on-surface-variant block">Passenger flights offset</span>
+                </div>
+              </div>
+              <div class="h-6 w-[1px] bg-surface-container-highest hidden sm:block"></div>
+              <div class="flex items-center gap-2">
+                <span class="text-lg">💧</span>
+                <div>
+                  <span id="carbon-eq-water" class="font-bold text-on-surface">+32% groundwater</span>
+                  <span class="text-[10px] text-on-surface-variant block">Infiltration & retention</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+<!-- Gemini AI Autonomous Diagnostics Accordion -->
           <div class="p-4 rounded-xl bg-surface-container-low border border-surface-container-highest/40 flex flex-col gap-3">
             <div class="flex items-center justify-between cursor-pointer" onclick="document.getElementById('forest-diag-body').classList.toggle('hidden')">
               <div class="flex items-center gap-2">

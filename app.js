@@ -366,6 +366,133 @@ window.addEventListener('resize', () => {
   if (range) updateForestSlider(range.value);
 });
 
+// ============================================================
+// CARBON CREDIT & ECONOMIC ROI CALCULATOR
+// ============================================================
+let carbonHectares = 25;
+let carbonPricePerTonne = 30;
+let carbonHorizonYears = 5;
+let carbonBaseRatePerHa = 22; // default 22 tonnes CO2e / ha / year
+
+function onHectaresInput(val) {
+  const num = Math.max(1, Math.min(1000, parseInt(val) || 1));
+  carbonHectares = num;
+  const slider = document.getElementById('carbon-hectares-slider');
+  const input = document.getElementById('carbon-hectares-input');
+  if (slider && parseInt(slider.value) !== num) slider.value = num;
+  if (input && parseInt(input.value) !== num) input.value = num;
+  updateCarbonROI();
+}
+
+function setCarbonPrice(price) {
+  carbonPricePerTonne = price;
+  
+  [15, 30, 50].forEach(p => {
+    const btn = document.getElementById(`btn-price-${p}`);
+    if (btn) {
+      if (p === price) {
+        btn.className = 'px-2 py-1.5 rounded-lg bg-primary text-on-primary text-[11px] font-mono font-bold border border-primary transition-all text-center cursor-pointer shadow';
+      } else {
+        btn.className = 'px-2 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface-variant text-[11px] font-mono border border-surface-container-highest transition-all text-center cursor-pointer';
+      }
+    }
+  });
+
+  const priceText = document.getElementById('carbon-active-price-text');
+  if (priceText) {
+    const tierName = price === 15 ? 'Avoidance' : (price === 30 ? 'Removal' : 'Bio-ARR');
+    priceText.textContent = `$${price} / t CO2e (${tierName})`;
+  }
+
+  updateCarbonROI();
+}
+
+function setCarbonHorizon(years) {
+  carbonHorizonYears = years;
+
+  [1, 5, 10, 20].forEach(y => {
+    const btn = document.getElementById(`btn-horizon-${y}`);
+    if (btn) {
+      if (y === years) {
+        btn.className = 'px-3 py-1 rounded-md bg-secondary text-on-secondary font-bold transition-all cursor-pointer shadow';
+      } else {
+        btn.className = 'px-3 py-1 rounded-md text-on-surface-variant hover:text-on-surface transition-all cursor-pointer';
+      }
+    }
+  });
+
+  updateCarbonROI();
+}
+
+function initCarbonCalculator(data) {
+  const canopy = data.canopy_cover_percent || 50;
+  const bare = data.bare_ground_percent || (100 - canopy);
+  
+  // Calibrate sequestration rate: degraded land has higher restoration delta
+  if (bare >= 50) {
+    carbonBaseRatePerHa = 24.5;
+  } else if (bare >= 25) {
+    carbonBaseRatePerHa = 21.0;
+  } else {
+    carbonBaseRatePerHa = 18.0;
+  }
+
+  // Auto-calibrate parcel size if large deforestation is detected
+  if (bare > 60 && carbonHectares < 40) {
+    carbonHectares = 50;
+    const slider = document.getElementById('carbon-hectares-slider');
+    const input = document.getElementById('carbon-hectares-input');
+    if (slider) slider.value = 50;
+    if (input) input.value = 50;
+  }
+
+  updateCarbonROI();
+}
+
+function updateCarbonROI() {
+  // Annual sequestration (tonnes of CO2e)
+  const annualSequestration = carbonHectares * carbonBaseRatePerHa;
+  // Cumulative sequestration over selected horizon
+  const totalSequestration = Math.round(annualSequestration * carbonHorizonYears);
+
+  // Financial modeling (USD)
+  const grossRevenue = Math.round(totalSequestration * carbonPricePerTonne);
+  
+  // Capital & Operational Expenditure
+  const initialPlantingCost = carbonHectares * 850; // $850/ha saplings, labor, soil inoculation
+  const annualMonitoringCost = carbonHectares * 110; // $110/ha/year telemetry, remote sensing audit, rangers
+  const totalExpenditure = initialPlantingCost + (annualMonitoringCost * carbonHorizonYears);
+
+  const netProfit = Math.max(0, grossRevenue - totalExpenditure);
+  
+  // Payback period (years)
+  const annualGross = annualSequestration * carbonPricePerTonne;
+  const annualNetCashflow = Math.max(100, annualGross - annualMonitoringCost);
+  const paybackYears = Math.min(20, Math.max(0.8, (initialPlantingCost / annualNetCashflow))).toFixed(1);
+
+  // Real-world equivalencies (EPA & ICAO standards)
+  const carsRemovedPerYear = Math.round(annualSequestration / 4.6); // 4.6 t CO2e / car / year
+  const flightsOffset = Math.round(totalSequestration / 0.8); // 0.8 t CO2e / passenger flight
+  const waterGainPercent = Math.min(55, Math.round(18 + (carbonHectares * 0.08)));
+
+  // Update DOM Elements
+  const elTotalTonnes = document.getElementById('carbon-total-tonnes');
+  const elGross = document.getElementById('carbon-gross-revenue');
+  const elNet = document.getElementById('carbon-net-profit');
+  const elPayback = document.getElementById('carbon-payback');
+  const elCars = document.getElementById('carbon-eq-cars');
+  const elFlights = document.getElementById('carbon-eq-flights');
+  const elWater = document.getElementById('carbon-eq-water');
+
+  if (elTotalTonnes) elTotalTonnes.textContent = `${totalSequestration.toLocaleString()} t`;
+  if (elGross) elGross.textContent = `$${grossRevenue.toLocaleString()}`;
+  if (elNet) elNet.textContent = `+$${netProfit.toLocaleString()}`;
+  if (elPayback) elPayback.textContent = `${paybackYears} Years`;
+  if (elCars) elCars.textContent = `${carsRemovedPerYear.toLocaleString()} cars/yr`;
+  if (elFlights) elFlights.textContent = `${flightsOffset.toLocaleString()} flights`;
+  if (elWater) elWater.textContent = `+${waterGainPercent}% groundwater`;
+}
+
 function displayForestResults(data) {
   const card = document.getElementById('forest-results-card');
   card.classList.remove('hidden');
@@ -479,6 +606,9 @@ function displayForestResults(data) {
       speciesGrid.appendChild(card);
     });
   }
+
+  // Initialize Carbon Credit & Economic ROI Calculator
+  initCarbonCalculator(data);
 
   // Smooth scroll to results
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });

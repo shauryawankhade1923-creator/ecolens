@@ -574,48 +574,24 @@ function renderSpeciesDistributionMap(distribution, speciesName) {
   const gmapEl = document.getElementById('species-gmap');
   const leafletEl = document.getElementById('species-range-map');
 
-  if (currentMapMode === 'leaflet') {
-    if (gmapEl) gmapEl.classList.add('hidden');
-    if (leafletEl) leafletEl.classList.remove('hidden');
-    renderLeafletMap(distribution, speciesName);
-  } else {
-    // Google Maps Satellite or Terrain
-    loadGoogleMapsSdk().then((maps) => {
+  const hasGmapsKey = Boolean((localStorage.getItem('ecolens_gmaps_key') || '').trim());
+
+  if ((currentMapMode === 'satellite' || currentMapMode === 'terrain') && hasGmapsKey) {
+    // Official Google Maps Platform SDK with API Key
+    loadGoogleMapsSdk().then(() => {
       if (gmapEl) gmapEl.classList.remove('hidden');
       if (leafletEl) leafletEl.classList.add('hidden');
       renderGoogleMap(distribution, speciesName, currentMapMode);
-    }).catch((err) => {
-      console.warn('Google Maps unavailable:', err.message);
-      // Display friendly prompt in gmap viewport if user explicitly picked satellite
-      if (gmapEl && err.message === 'MISSING_KEY') {
-        gmapEl.classList.remove('hidden');
-        if (leafletEl) leafletEl.classList.add('hidden');
-        gmapEl.innerHTML = `
-          <div class="h-full flex flex-col items-center justify-center p-6 text-center bg-[#0d1512] text-on-surface gap-3">
-            <span class="material-symbols-outlined text-secondary text-4xl">satellite_alt</span>
-            <div class="font-bold text-sm">Google Maps Satellite Ready</div>
-            <p class="text-xs text-on-surface-variant max-w-sm">
-              To render real-time Google Maps Satellite and Terrain imagery, enter your Google Maps API Key or grab a free Maps Demo Key in Settings (⚙️).
-            </p>
-            <div class="flex items-center gap-2 mt-1">
-              <button onclick="openApiModal()" class="px-3.5 py-1.5 rounded-lg bg-secondary text-on-secondary text-xs font-semibold flex items-center gap-1 shadow">
-                <span class="material-symbols-outlined text-[14px]">key</span> Enter API Key
-              </button>
-              <button onclick="switchMapProvider('leaflet')" class="px-3.5 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-xs font-semibold border border-surface-container-highest">
-                Use Biosphere Dark Map
-              </button>
-            </div>
-          </div>
-        `;
-        // Also populate region pills so they work and link to Google Maps directly
-        renderRegionPills(distribution.locations || [], null, null);
-      } else {
-        // Fallback to Leaflet
-        if (gmapEl) gmapEl.classList.add('hidden');
-        if (leafletEl) leafletEl.classList.remove('hidden');
-        renderLeafletMap(distribution, speciesName);
-      }
+    }).catch(() => {
+      if (gmapEl) gmapEl.classList.add('hidden');
+      if (leafletEl) leafletEl.classList.remove('hidden');
+      renderLeafletMap(distribution, speciesName, currentMapMode);
     });
+  } else {
+    // High-Resolution Satellite / Terrain / Dark via native tiles (Zero-key required)
+    if (gmapEl) gmapEl.classList.add('hidden');
+    if (leafletEl) leafletEl.classList.remove('hidden');
+    renderLeafletMap(distribution, speciesName, currentMapMode);
   }
 }
 
@@ -750,7 +726,9 @@ function openGmapInfoWindow(infoWindow, loc, position, mapInstance) {
   infoWindow.open(mapInstance);
 }
 
-function renderLeafletMap(distribution, speciesName) {
+let currentTileLayer = null;
+
+function renderLeafletMap(distribution, speciesName, mode = 'satellite') {
   const mapElement = document.getElementById('species-range-map');
   if (!mapElement || typeof L === 'undefined') return;
 
@@ -761,13 +739,35 @@ function renderLeafletMap(distribution, speciesName) {
       attributionControl: false
     }).setView([20, 0], 2);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    speciesMarkersLayer = L.layerGroup().addTo(speciesMap);
+  }
+
+  // Determine active tile layer
+  if (currentTileLayer) {
+    speciesMap.removeLayer(currentTileLayer);
+  }
+
+  if (mode === 'satellite') {
+    // Google Maps Hybrid: High-Res Satellite + National Parks + Roads & Borders
+    currentTileLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['0', '1', '2', '3'],
+      attribution: '&copy; Google Maps Satellite'
+    }).addTo(speciesMap);
+  } else if (mode === 'terrain') {
+    // Google Maps Physical Elevation & Terrain
+    currentTileLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['0', '1', '2', '3'],
+      attribution: '&copy; Google Maps Terrain'
+    }).addTo(speciesMap);
+  } else {
+    // EcoLens Dark Biosphere
+    currentTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 18,
       subdomains: 'abcd',
       attribution: '&copy; CartoDB'
     }).addTo(speciesMap);
-
-    speciesMarkersLayer = L.layerGroup().addTo(speciesMap);
   }
 
   if (speciesMarkersLayer) {

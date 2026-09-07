@@ -543,30 +543,92 @@
 
       <!-- ================= 3. VIEW: PLANT & ANIMAL SCANNER ================= -->
       <section id="view-scanner" class="hidden flex-col gap-6">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 id="scanner-title" class="font-headline text-2xl font-bold">🌿 Plant Scanner</h2>
+            <h2 id="scanner-title" class="font-headline text-2xl font-bold flex items-center gap-2">
+              <span id="scanner-icon">🌿</span> <span id="scanner-heading-text">Plant Scanner</span>
+            </h2>
             <p id="scanner-desc" class="text-xs text-on-surface-variant">High-precision botanical computer vision trained on Pl@ntNet & Kew taxonomy.</p>
           </div>
-          <div class="flex gap-2">
-            <button onclick="setScannerMode('plant')" id="btn-mode-plant" class="px-3 py-1.5 rounded-full bg-primary-container text-on-primary-container font-mono text-xs font-semibold">Plant</button>
-            <button onclick="setScannerMode('animal')" id="btn-mode-animal" class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-mono text-xs">Animal</button>
+          <div class="flex items-center gap-2">
+            <!-- Plant / Animal Mode Switcher -->
+            <div class="flex rounded-full bg-surface-container-high p-1 border border-surface-container-highest">
+              <button onclick="setScannerMode('plant')" id="btn-mode-plant" class="px-3 py-1 rounded-full bg-primary-container text-on-primary-container font-mono text-xs font-semibold transition-all">Plant</button>
+              <button onclick="setScannerMode('animal')" id="btn-mode-animal" class="px-3 py-1 rounded-full text-on-surface-variant font-mono text-xs transition-all">Animal</button>
+            </div>
+            <!-- Quick Mode Trigger Buttons -->
+            <button onclick="startScannerCamera()" id="btn-start-camera" class="px-3.5 py-1.5 rounded-xl bg-secondary text-on-secondary font-mono text-xs font-semibold flex items-center gap-1.5 shadow hover:bg-secondary/90 transition-all active:scale-95">
+              <span class="material-symbols-outlined text-[16px]">photo_camera</span>
+              <span>Camera</span>
+            </button>
+            <button onclick="document.getElementById('scanner-file-input').click()" id="btn-upload-file" class="px-3.5 py-1.5 rounded-xl bg-surface-container-high hover:bg-surface-bright text-on-surface font-mono text-xs font-semibold flex items-center gap-1.5 border border-surface-container-highest transition-all active:scale-95">
+              <span class="material-symbols-outlined text-[16px]">cloud_upload</span>
+              <span>Upload</span>
+            </button>
           </div>
         </div>
 
         <!-- Optical Viewfinder Box -->
-        <div class="relative w-full rounded-2xl overflow-hidden bg-surface-container-low border border-surface-container-highest/40 min-h-[300px] flex items-center justify-center">
-          <img id="scanner-img-preview" class="w-full max-h-96 object-cover hidden" alt="Specimen Viewfinder"/>
+        <div class="relative w-full rounded-2xl overflow-hidden bg-surface-container-low border border-surface-container-highest/40 min-h-[320px] flex items-center justify-center">
           
-          <div id="scanner-placeholder" class="flex flex-col items-center justify-center p-8 text-center cursor-pointer" onclick="document.getElementById('scanner-file-input').click()">
-            <div class="w-16 h-16 rounded-full bg-secondary/15 flex items-center justify-center text-secondary mb-3">
-              <span class="material-symbols-outlined text-[32px]">photo_camera</span>
+          <!-- 1. Live Camera Feed Container (when active) -->
+          <div id="scanner-camera-container" class="relative w-full h-full hidden flex-col items-center justify-center bg-black min-h-[320px]">
+            <video id="scanner-camera-feed" class="w-full max-h-[440px] object-cover" autoplay playsinline muted></video>
+            
+            <!-- Live Scanning Overlay Reticle -->
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div class="w-60 h-60 sm:w-72 sm:h-72 border-2 border-dashed border-secondary/70 rounded-3xl relative flex items-center justify-center">
+                <div class="absolute inset-x-0 top-0 h-0.5 bg-secondary shadow-[0_0_12px_#34d399] animate-pulse"></div>
+                <span class="text-[11px] font-mono text-secondary/80 bg-black/60 px-2 py-0.5 rounded-full">ALIGN SPECIMEN</span>
+              </div>
             </div>
-            <p class="font-headline text-base font-semibold">Click to Snap Photo or Upload Specimen</p>
-            <p class="text-xs text-on-surface-variant mt-1">Direct camera optical reticle analysis</p>
+
+            <!-- Shutter & Camera Controls -->
+            <div class="absolute bottom-5 inset-x-0 flex items-center justify-center gap-6 z-10">
+              <button onclick="switchCamera()" class="w-11 h-11 rounded-full bg-surface-container-highest/80 backdrop-blur-md text-on-surface flex items-center justify-center hover:bg-surface-bright transition-all shadow-lg active:scale-95" title="Flip Camera (Rear/Front)">
+                <span class="material-symbols-outlined text-[20px]">flip_camera_android</span>
+              </button>
+
+              <button onclick="captureFromCamera()" class="w-16 h-16 rounded-full bg-secondary text-on-secondary flex items-center justify-center ring-4 ring-secondary/30 hover:scale-105 active:scale-95 transition-all shadow-2xl" title="Capture Specimen Photo">
+                <span class="material-symbols-outlined text-[32px]">photo_camera</span>
+              </button>
+
+              <button onclick="stopScannerCamera()" class="w-11 h-11 rounded-full bg-surface-container-highest/80 backdrop-blur-md text-error flex items-center justify-center hover:bg-surface-bright transition-all shadow-lg active:scale-95" title="Close Camera">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
           </div>
 
+          <!-- Hidden Canvas for Frame Capture -->
+          <canvas id="scanner-camera-canvas" class="hidden"></canvas>
+
+          <!-- 2. Static Preview Container (Post Capture / File Upload) -->
+          <div id="scanner-preview-container" class="relative w-full hidden flex-col items-center">
+            <img id="scanner-img-preview" class="w-full max-h-[440px] object-cover" alt="Specimen Viewfinder"/>
+            <button onclick="resetScannerView()" class="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-black/70 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-black/90 transition-colors z-10 shadow">
+              <span class="material-symbols-outlined text-[16px]">restart_alt</span> Rescan / Retake
+            </button>
+          </div>
+          
+          <!-- 3. Idle / Choice Cards -->
+          <div id="scanner-placeholder" class="flex flex-col items-center justify-center p-8 text-center w-full">
+            <div class="flex flex-wrap items-center justify-center gap-4 mb-4">
+              <button onclick="startScannerCamera()" class="px-5 py-3.5 rounded-2xl bg-secondary text-on-secondary font-headline text-sm font-semibold flex items-center gap-2.5 shadow-lg hover:scale-105 active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-[24px]">photo_camera</span>
+                <span>Open Live Camera</span>
+              </button>
+              <button onclick="document.getElementById('scanner-file-input').click()" class="px-5 py-3.5 rounded-2xl bg-surface-container-high hover:bg-surface-bright text-on-surface font-headline text-sm font-semibold flex items-center gap-2.5 border border-surface-container-highest transition-all shadow hover:scale-105 active:scale-95">
+                <span class="material-symbols-outlined text-[24px]">image</span>
+                <span>Upload Specimen Photo</span>
+              </button>
+            </div>
+            <p class="font-headline text-sm font-semibold text-on-surface">Scan live flora or fauna using your camera or gallery</p>
+            <p class="text-xs text-on-surface-variant mt-1">Supports instant webcam, mobile rear-camera with switch, and photo uploads</p>
+          </div>
+
+          <!-- Hidden File Inputs -->
           <input type="file" id="scanner-file-input" accept="image/*" class="hidden" onchange="handleSpeciesUpload(this)"/>
+          <input type="file" id="scanner-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleSpeciesUpload(this)"/>
 
           <!-- Reticle Frame Overlays -->
           <div class="absolute top-4 left-4 w-5 h-5 border-t-2 border-l-2 border-primary pointer-events-none"></div>

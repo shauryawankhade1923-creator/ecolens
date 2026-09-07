@@ -37,6 +37,8 @@ function setupNavDrawer() {
 // CLIENT-SIDE ROUTING & NAVIGATION
 // ============================================================
 function navigate(viewName) {
+  if (typeof stopScannerCamera === "function") stopScannerCamera();
+
   currentView = viewName;
   
   // Hide all views
@@ -265,61 +267,188 @@ function displayForestResults(data) {
 }
 
 // ============================================================
-// 2. BOTANICAL & WILDLIFE SCANNER
 // ============================================================
+// 2. BOTANICAL & WILDLIFE SCANNER & CAMERA ENGINE
+// ============================================================
+let cameraStream = null;
+let currentCameraFacing = 'environment';
+
 function setScannerMode(mode) {
   scannerType = mode;
   const btnP = document.getElementById('btn-mode-plant');
   const btnA = document.getElementById('btn-mode-animal');
-  const title = document.getElementById('scanner-title');
+  const icon = document.getElementById('scanner-icon');
+  const heading = document.getElementById('scanner-heading-text');
   const desc = document.getElementById('scanner-desc');
 
   if (mode === 'plant') {
-    btnP.className = 'px-3 py-1.5 rounded-full bg-primary-container text-on-primary-container font-mono text-xs font-semibold';
-    btnA.className = 'px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-mono text-xs';
-    title.textContent = '🌿 Plant Scanner';
-    desc.textContent = 'High-precision botanical computer vision trained on Pl@ntNet & Kew taxonomy.';
+    if (btnP) btnP.className = 'px-3 py-1 rounded-full bg-primary-container text-on-primary-container font-mono text-xs font-semibold transition-all';
+    if (btnA) btnA.className = 'px-3 py-1 rounded-full text-on-surface-variant font-mono text-xs transition-all';
+    if (icon) icon.textContent = '🌿';
+    if (heading) heading.textContent = 'Plant Scanner';
+    if (desc) desc.textContent = 'High-precision botanical computer vision trained on Pl@ntNet & Kew taxonomy.';
   } else {
-    btnA.className = 'px-3 py-1.5 rounded-full bg-tertiary-container text-on-tertiary-container font-mono text-xs font-semibold';
-    btnP.className = 'px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-mono text-xs';
-    title.textContent = '🐅 Animal Scanner';
-    desc.textContent = 'Wildlife visual intelligence engine identifying species across global biomes.';
+    if (btnA) btnA.className = 'px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container font-mono text-xs font-semibold transition-all';
+    if (btnP) btnP.className = 'px-3 py-1 rounded-full text-on-surface-variant font-mono text-xs transition-all';
+    if (icon) icon.textContent = '🐾';
+    if (heading) heading.textContent = 'Animal Scanner';
+    if (desc) desc.textContent = 'Wildlife visual intelligence engine identifying species across global biomes.';
   }
+}
+
+async function startScannerCamera() {
+  const video = document.getElementById('scanner-camera-feed');
+  const container = document.getElementById('scanner-camera-container');
+  const placeholder = document.getElementById('scanner-placeholder');
+  const previewContainer = document.getElementById('scanner-preview-container');
+  const resultCard = document.getElementById('species-result-card');
+
+  if (previewContainer) previewContainer.classList.add('hidden');
+  if (resultCard) resultCard.classList.add('hidden');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    const camInput = document.getElementById('scanner-camera-input');
+    if (camInput) camInput.click();
+    return;
+  }
+
+  try {
+    if (cameraStream) {
+      stopScannerCamera();
+    }
+
+    const constraints = {
+      video: {
+        facingMode: { ideal: currentCameraFacing },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    };
+
+    cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = cameraStream;
+    await video.play();
+
+    if (placeholder) placeholder.classList.add('hidden');
+    if (container) {
+      container.classList.remove('hidden');
+      container.classList.add('flex');
+    }
+  } catch (err) {
+    console.warn('Live camera stream error, falling back to capture input:', err);
+    const camInput = document.getElementById('scanner-camera-input');
+    if (camInput) camInput.click();
+  }
+}
+
+function stopScannerCamera() {
+  const container = document.getElementById('scanner-camera-container');
+  const placeholder = document.getElementById('scanner-placeholder');
+  const video = document.getElementById('scanner-camera-feed');
+  const previewContainer = document.getElementById('scanner-preview-container');
+
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+
+  if (video) video.srcObject = null;
+  if (container) {
+    container.classList.add('hidden');
+    container.classList.remove('flex');
+  }
+  if (placeholder && (!previewContainer || previewContainer.classList.contains('hidden'))) {
+    placeholder.classList.remove('hidden');
+  }
+}
+
+async function switchCamera() {
+  currentCameraFacing = (currentCameraFacing === 'environment') ? 'user' : 'environment';
+  await startScannerCamera();
+}
+
+function captureFromCamera() {
+  const video = document.getElementById('scanner-camera-feed');
+  const canvas = document.getElementById('scanner-camera-canvas');
+  if (!video || !video.videoWidth || !video.videoHeight) {
+    alert('Camera feed not ready. Please wait a moment.');
+    return;
+  }
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob(async (blob) => {
+    if (!blob) return;
+    const file = new File([blob], specimen_.jpg, { type: 'image/jpeg' });
+    stopScannerCamera();
+    await processAndIdentifyFile(file);
+  }, 'image/jpeg', 0.92);
+}
+
+function resetScannerView() {
+  stopScannerCamera();
+  const previewContainer = document.getElementById('scanner-preview-container');
+  const placeholder = document.getElementById('scanner-placeholder');
+  const resultCard = document.getElementById('species-result-card');
+  const fileInput = document.getElementById('scanner-file-input');
+  const camInput = document.getElementById('scanner-camera-input');
+
+  if (previewContainer) previewContainer.classList.add('hidden');
+  if (resultCard) resultCard.classList.add('hidden');
+  if (placeholder) placeholder.classList.remove('hidden');
+  if (fileInput) fileInput.value = '';
+  if (camInput) camInput.value = '';
 }
 
 async function handleSpeciesUpload(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
+  stopScannerCamera();
+  await processAndIdentifyFile(file);
+}
 
+async function processAndIdentifyFile(file) {
   const preview = document.getElementById('scanner-img-preview');
-  preview.src = URL.createObjectURL(file);
-  preview.classList.remove('hidden');
-  document.getElementById('scanner-placeholder').classList.add('hidden');
-  document.getElementById('scanner-loading').classList.remove('hidden');
+  const previewContainer = document.getElementById('scanner-preview-container');
+  const placeholder = document.getElementById('scanner-placeholder');
+  const loading = document.getElementById('scanner-loading');
+  const resultCard = document.getElementById('species-result-card');
+
+  if (resultCard) resultCard.classList.add('hidden');
+  if (preview) preview.src = URL.createObjectURL(file);
+  if (previewContainer) previewContainer.classList.remove('hidden');
+  if (placeholder) placeholder.classList.add('hidden');
+  if (loading) loading.classList.remove('hidden');
 
   const formData = new FormData();
   formData.append('file', file);
   formData.append('species_type', scannerType);
 
+  const gemKey = localStorage.getItem('ecolens_gemini_key') || '';
+  const pnetKey = localStorage.getItem('ecolens_plantnet_key') || '';
+
   try {
-    let res = await fetch(`${API_BASE}/api/species/identify`, {
+    let res = await fetch(${API_BASE}/api/species/identify, {
       method: 'POST',
+      headers: {
+        'x-gemini-key': gemKey,
+        'x-plantnet-key': pnetKey
+      },
       body: formData
     });
-    if (!res.ok && res.status === 404) {
-      res = await fetch(`${API_BASE}/species/identify`, {
-        method: 'POST',
-        body: formData
-      });
-    }
+
     const data = await res.json();
-    document.getElementById('scanner-loading').classList.add('hidden');
+    if (loading) loading.classList.add('hidden');
     if (!res.ok || !data.species_name) {
       throw new Error(data.detail || 'Species could not be identified.');
     }
     displaySpeciesResult(data);
   } catch (e) {
-    document.getElementById('scanner-loading').classList.add('hidden');
+    if (loading) loading.classList.add('hidden');
     alert('Identification error: ' + e.message);
   }
 }

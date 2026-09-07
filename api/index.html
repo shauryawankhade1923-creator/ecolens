@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+  <title>🌲 EcoLens 2.0 — Environmental Intelligence Platform</title>
+
+  <!-- Google Fonts & Icons -->
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+
+  <!-- Tailwind CDN & Theme Config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "var(--bg-surface)",
+            "surface-dim": "var(--bg-surface)",
+            "surface-container-lowest": "var(--bg-surface-lowest)",
+            "surface-container-low": "var(--bg-surface-low)",
+            "surface-container": "var(--bg-surface-card)",
+            "surface-container-high": "var(--bg-surface-high)",
+            "surface-container-highest": "var(--bg-surface-highest)",
+            "surface-bright": "var(--bg-surface-bright)",
+            "primary": "var(--color-primary)",
+            "primary-container": "var(--color-primary-container)",
+            "on-primary": "var(--color-on-primary)",
+            "on-primary-container": "var(--color-on-primary-container)",
+            "secondary": "var(--color-secondary)",
+            "secondary-container": "var(--color-secondary-container)",
+            "on-secondary": "var(--color-on-secondary)",
+            "on-secondary-container": "var(--color-on-secondary-container)",
+            "secondary-fixed-dim": "var(--color-secondary)",
+            "tertiary": "var(--color-tertiary)",
+            "tertiary-container": "#f59e0b",
+            "on-surface": "var(--text-on-surface)",
+            "on-surface-variant": "var(--text-on-surface-variant)",
+            "outline": "var(--color-outline)",
+            "error": "#ffb4ab",
+            "error-container": "#93000a",
+            "on-error": "#690005"
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"],
+            "headline": ["Space Grotesk", "sans-serif"],
+            "body": ["Geist", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root, [data-theme="biosphere-dark"] {
+      --bg-surface: #0b1326;
+      --bg-surface-lowest: #060e20;
+      --bg-surface-low: #131b2e;
+      --bg-surface-card: #171f33;
+      --bg-surface-high: #222a3d;
+      --bg-surface-highest: #2d3449;
+      --bg-surface-bright: #31394d;
+      --text-on-surface: #dae2fd;
+      --text-on-surface-variant: #bdc8d1;
+      --color-primary: #8ed5ff;
+      --color-primary-container: #38bdf8;
+      --color-on-primary: #00354a;
+      --color-on-primary-container: #004965;
+      --color-secondary: #4edea3;
+      --color-secondary-container: #00a572;
+      --color-on-secondary: #003824;
+      --color-on-secondary-container: #00311f;
+      --color-tertiary: #ffc174;
+      --color-outline: #87929a;
+    }
+
+    [data-theme="emerald-forest"] {
+      --bg-surface: #031c13;
+      --bg-surface-lowest: #01120b;
+      --bg-surface-low: #07271c;
+      --bg-surface-card: #0c3828;
+      --bg-surface-high: #134935;
+      --bg-surface-highest: #1a5c43;
+      --bg-surface-bright: #237053;
+      --text-on-surface: #e6fcf0;
+      --text-on-surface-variant: #a3e0c0;
+      --color-primary: #5eead4;
+      --color-primary-container: #14b8a6;
+      --color-on-primary: #042f2e;
+      --color-on-primary-container: #ccfbf1;
+      --color-secondary: #34d399;
+      --color-secondary-container: #059669;
+      --color-on-secondary: #022c22;
+      --color-on-secondary-container: #a7f3d0;
+      --color-tertiary: #fcd34d;
+      --color-outline: #6ee7b7;
+    }
+
+    [data-theme="midnight-oled"] {
+      --bg-surface: #030712;
+      --bg-surface-lowest: #000000;
+      --bg-surface-low: #090e17;
+      --bg-surface-card: #111827;
+      --bg-surface-high: #1f2937;
+      --bg-surface-highest: #374151;
+      --bg-surface-bright: #4b5563;
+      --text-on-surface: #f3f4f6;
+      --text-on-surface-variant: #9ca3af;
+      --color-primary: #38bdf8;
+      --color-primary-container: #0284c7;
+      --color-on-primary: #082f49;
+      --color-on-primary-container: #e0f2fe;
+      --color-secondary: #a3e635;
+      --color-secondary-container: #65a30d;
+      --color-on-secondary: #1a2e05;
+      --color-on-secondary-container: #ecfccb;
+      --color-tertiary: #fb923c;
+      --color-outline: #6b7280;
+    }
+
+    [data-theme="daylight-eco"] {
+      --bg-surface: #f1f5f9;
+      --bg-surface-lowest: #ffffff;
+      --bg-surface-low: #e2e8f0;
+      --bg-surface-card: #ffffff;
+      --bg-surface-high: #f8fafc;
+      --bg-surface-highest: #cbd5e1;
+      --bg-surface-bright: #e2e8f0;
+      --text-on-surface: #0f172a;
+      --text-on-surface-variant: #475569;
+      --color-primary: #0284c7;
+      --color-primary-container: #bae6fd;
+      --color-on-primary: #ffffff;
+      --color-on-primary-container: #0369a1;
+      --color-secondary: #059669;
+      --color-secondary-container: #a7f3d0;
+      --color-on-secondary: #ffffff;
+      --color-on-secondary-container: #065f46;
+      --color-tertiary: #d97706;
+      --color-outline: #94a3b8;
+    }
+
+    body {
+      background-color: var(--bg-surface);
+      color: var(--text-on-surface);
+      font-family: 'Geist', sans-serif;
+      overscroll-behavior: none;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+    ::-webkit-scrollbar { display: none; }
+    .nav-active {
+      background: rgba(56, 189, 248, 0.15) !important;
+      color: var(--color-primary) !important;
+      font-weight: 600 !important;
+      border-left: 3px solid var(--color-secondary);
+    }
+    .bottom-nav-active {
+      color: var(--color-primary) !important;
+      font-weight: 600 !important;
+    }
+    .theme-preview-card.active {
+      border-color: var(--color-secondary) !important;
+      box-shadow: 0 0 12px rgba(78, 222, 163, 0.35);
+    }
+  </style>
+</head>
+
+<body class="bg-surface text-on-surface flex flex-col min-h-screen">
+
+  <!-- ================= TOP APP HEADER ================= -->
+  <header class="fixed top-0 inset-x-0 z-50 bg-surface-container-lowest/80 backdrop-blur-xl border-b border-surface-container-highest/50 shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
+    <div class="h-16 px-4 flex items-center justify-between gap-3 max-w-7xl mx-auto">
+      <div class="flex items-center gap-3">
+        <button id="menu-toggle" class="w-10 h-10 flex items-center justify-center text-on-surface hover:text-primary transition-colors md:hidden">
+          <span class="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+        <div class="flex flex-col">
+          <span class="font-headline text-lg md:text-xl font-bold bg-gradient-to-r from-secondary to-primary-container bg-clip-text text-transparent tracking-tight">
+            🌲 EcoLens 2.0
+          </span>
+          <span id="active-screen-subtitle" class="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider">
+            Environmental Telemetry Grid
+          </span>
+        </div>
+      </div>
+
+      <!-- Header Right Badges -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container/15 text-secondary border border-secondary/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+          <span id="system-status-badge" class="font-mono text-xs">FastAPI Online</span>
+        </div>
+        <button onclick="toggleThemeModal()" class="w-8 h-8 rounded-full bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-primary text-sm shadow transition-colors" title="Change Theme">
+          <span class="material-symbols-outlined text-[18px]">palette</span>
+        </button>
+        <button onclick="openApiModal()" class="w-8 h-8 rounded-full bg-surface-container-high hover:bg-surface-bright flex items-center justify-center text-primary text-sm shadow transition-colors" title="API Configuration">
+          <span class="material-symbols-outlined text-[18px]">key</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex flex-1 pt-16 pb-20 md:pb-0">
+
+    <!-- ================= DESKTOP SIDEBAR ================= -->
+    <aside id="nav-sidebar" class="w-64 bg-surface-container-low border-r border-surface-container-highest/40 p-4 flex-col justify-between hidden md:flex shrink-0 min-h-[calc(100vh-4rem)]">
+      <div class="flex flex-col gap-4">
+        <!-- API Info Card -->
+        <div class="p-3 rounded-xl bg-surface-container/70 border border-surface-container-highest/50 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] text-on-surface-variant uppercase font-bold">Neural Engines</span>
+            <button onclick="openApiModal()" class="text-primary hover:underline text-[10px] font-mono">Config</button>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span>Gemini 2.5 Flash</span>
+            <span id="gemini-status" class="px-1.5 py-0.5 rounded bg-secondary-container/20 text-secondary text-[10px] font-mono">ONLINE</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span>Pl@ntNet Vision</span>
+            <span id="plantnet-status" class="px-1.5 py-0.5 rounded bg-secondary-container/20 text-secondary text-[10px] font-mono">ONLINE</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span>ResNet-18 Model</span>
+            <span id="model-status" class="px-1.5 py-0.5 rounded bg-secondary-container/20 text-secondary text-[10px] font-mono">LOADED</span>
+          </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex flex-col gap-1">
+          <button onclick="navigate('dashboard')" class="nav-btn nav-active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left" data-view="dashboard">
+            <span class="material-symbols-outlined text-[20px]">grid_view</span>
+            <span>Dashboard</span>
+          </button>
+          <button onclick="navigate('forest-ai')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-left" data-view="forest-ai">
+            <span class="material-symbols-outlined text-[20px]">forest</span>
+            <span>Forest AI Engine</span>
+          </button>
+          <button onclick="navigate('plant-scanner')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-left" data-view="plant-scanner">
+            <span class="material-symbols-outlined text-[20px]">psychiatry</span>
+            <span>Plant Scanner</span>
+          </button>
+          <button onclick="navigate('animal-scanner')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-left" data-view="animal-scanner">
+            <span class="material-symbols-outlined text-[20px]">pets</span>
+            <span>Animal Scanner</span>
+          </button>
+          <button onclick="navigate('voice-assistant')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-left" data-view="voice-assistant">
+            <span class="material-symbols-outlined text-[20px]">mic</span>
+            <span>AI Voice Assistant</span>
+          </button>
+          <button onclick="navigate('species-database')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all text-left" data-view="species-database">
+            <span class="material-symbols-outlined text-[20px]">menu_book</span>
+            <span>Species Database</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="pt-4 border-t border-surface-container-highest/40 flex flex-col gap-3 text-[11px] font-mono text-on-surface-variant">
+        <div class="flex items-center justify-between">
+          <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-primary">palette</span> Theme:</span>
+          <select id="sidebar-theme-select" onchange="setTheme(this.value)" class="bg-surface-container-high text-on-surface font-mono text-[11px] rounded px-2 py-1 focus:outline-none border border-surface-container-highest/50">
+            <option value="biosphere-dark">🌲 Biosphere Dark</option>
+            <option value="emerald-forest">🌿 Emerald Forest</option>
+            <option value="midnight-oled">🌑 Midnight OLED</option>
+            <option value="daylight-eco">☀️ Daylight Eco</option>
+          </select>
+        </div>
+        <div>EcoLens Biosphere Node 08.4</div>
+        <div class="text-secondary flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Telemetry Active
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN CONTENT VIEWS ================= -->
+    <main class="flex-1 overflow-y-auto px-4 py-6 max-w-5xl mx-auto w-full">
+
+      <!-- ================= 1. VIEW: DASHBOARD ================= -->
+      <section id="view-dashboard" class="flex flex-col gap-6">
+        <!-- Hero Telemetry Banner -->
+        <div class="relative overflow-hidden rounded-2xl bg-surface-container-low p-5 md:p-7 shadow-xl border border-surface-container-highest/40">
+          <div class="absolute -right-12 -top-12 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="absolute -left-12 -bottom-12 w-44 h-44 bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="relative z-10 flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-secondary animate-ping"></span>
+              <span class="font-mono text-xs text-secondary font-bold uppercase tracking-wider">Biosphere Telemetry Grid // Node 08.4</span>
+            </div>
+            <h1 class="font-headline text-2xl md:text-3xl text-on-surface font-bold tracking-tight">
+              🌍 Environmental Intelligence Dashboard
+            </h1>
+            <p class="text-sm text-on-surface-variant max-w-2xl leading-relaxed">
+              Real-time deep learning forest canopy classification, botanical and wildlife taxa identification, and multi-model voice conversational ecological intelligence.
+            </p>
+          </div>
+          <div class="relative z-10 mt-4 p-3 rounded-lg bg-surface-container-lowest flex items-center justify-between border border-surface-container-highest/30">
+            <div class="flex items-center gap-2 text-xs">
+              <span class="material-symbols-outlined text-primary text-[18px]">satellite_alt</span>
+              <span>Orbital Stream: Sentinel-2C L2A Multispectral</span>
+            </div>
+            <span class="font-mono text-[11px] text-secondary bg-secondary-container/20 px-2 py-0.5 rounded font-semibold">SYNCED 0.4s</span>
+          </div>
+        </div>
+
+        <!-- 4 Metric Cards Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <!-- Card 1: Forest AI -->
+          <div onclick="navigate('forest-ai')" class="cursor-pointer flex flex-col justify-between p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all border border-surface-container-highest/30 shadow-md group">
+            <div class="flex items-start justify-between">
+              <div class="w-9 h-9 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary">
+                <span class="material-symbols-outlined text-[20px]">forest</span>
+              </div>
+              <span class="font-mono text-[10px] px-2 py-0.5 rounded-full bg-secondary-container/25 text-secondary flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span> ONLINE
+              </span>
+            </div>
+            <div class="mt-4 flex flex-col">
+              <span class="font-headline text-base font-semibold">Forest AI</span>
+              <span class="text-xs text-on-surface-variant">ResNet-18 + XAI</span>
+              <span class="font-mono text-[10px] text-primary mt-1">CANOPY SYNC</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Plant Scanner -->
+          <div onclick="navigate('plant-scanner')" class="cursor-pointer flex flex-col justify-between p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all border border-surface-container-highest/30 shadow-md group">
+            <div class="flex items-start justify-between">
+              <div class="w-9 h-9 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined text-[20px]">psychiatry</span>
+              </div>
+              <span class="font-mono text-[10px] px-2 py-0.5 rounded-full bg-secondary-container/25 text-secondary flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> READY
+              </span>
+            </div>
+            <div class="mt-4 flex flex-col">
+              <span class="font-headline text-base font-semibold">Plant Scanner</span>
+              <span class="text-xs text-on-surface-variant">Pl@ntNet + Gemini</span>
+              <span class="font-mono text-[10px] text-secondary mt-1">450k TAXA</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Animal Scanner -->
+          <div onclick="navigate('animal-scanner')" class="cursor-pointer flex flex-col justify-between p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all border border-surface-container-highest/30 shadow-md group">
+            <div class="flex items-start justify-between">
+              <div class="w-9 h-9 rounded-lg bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+                <span class="material-symbols-outlined text-[20px]">pets</span>
+              </div>
+              <span class="font-mono text-[10px] px-2 py-0.5 rounded-full bg-secondary-container/25 text-secondary flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> READY
+              </span>
+            </div>
+            <div class="mt-4 flex flex-col">
+              <span class="font-headline text-base font-semibold">Animal Scanner</span>
+              <span class="text-xs text-on-surface-variant">Wildlife Vision ID</span>
+              <span class="font-mono text-[10px] text-tertiary mt-1">FAUNA ACTIVE</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Voice Assistant -->
+          <div onclick="navigate('voice-assistant')" class="cursor-pointer flex flex-col justify-between p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all border border-surface-container-highest/30 shadow-md group">
+            <div class="flex items-start justify-between">
+              <div class="w-9 h-9 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary">
+                <span class="material-symbols-outlined text-[20px]">mic</span>
+              </div>
+              <span class="font-mono text-[10px] px-2 py-0.5 rounded-full bg-secondary-container/25 text-secondary flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> READY
+              </span>
+            </div>
+            <div class="mt-4 flex flex-col">
+              <span class="font-headline text-base font-semibold">Voice AI</span>
+              <span class="text-xs text-on-surface-variant">Multilingual Assistant</span>
+              <span class="font-mono text-[10px] text-primary mt-1">en-IN / hi / mr</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fast Dispatch Actions -->
+        <div class="flex flex-col gap-2">
+          <span class="font-mono text-xs text-primary uppercase tracking-wider font-bold">Fast Vector Dispatch</span>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="navigate('forest-ai')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-surface-container hover:bg-surface-bright active:scale-95 transition-all text-center border border-surface-container-highest/40">
+              <span class="material-symbols-outlined text-secondary text-[22px]">forest</span>
+              <span class="text-xs font-semibold mt-1">Forest AI</span>
+              <span class="font-mono text-[10px] text-on-surface-variant">Scan Canopy</span>
+            </button>
+            <button onclick="navigate('plant-scanner')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-surface-container hover:bg-surface-bright active:scale-95 transition-all text-center border border-surface-container-highest/40">
+              <span class="material-symbols-outlined text-primary text-[22px]">psychiatry</span>
+              <span class="text-xs font-semibold mt-1">Plant Scan</span>
+              <span class="font-mono text-[10px] text-on-surface-variant">Identify Flora</span>
+            </button>
+            <button onclick="navigate('voice-assistant')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-surface-container hover:bg-surface-bright active:scale-95 transition-all text-center border border-surface-container-highest/40">
+              <span class="material-symbols-outlined text-tertiary text-[22px]">mic</span>
+              <span class="text-xs font-semibold mt-1">Voice AI</span>
+              <span class="font-mono text-[10px] text-on-surface-variant">Ask Question</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Capabilities Table / Neural Engines Grid -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h2 class="font-headline text-lg font-bold">🚀 EcoLens Capabilities & Neural Engines</h2>
+            <span class="font-mono text-xs px-2 py-0.5 rounded bg-surface-container-highest text-primary">8 Systems Online</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div class="p-3 rounded-xl bg-surface-container-low border border-surface-container-highest/30 flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold flex items-center gap-1.5"><span class="material-symbols-outlined text-secondary text-[18px]">satellite</span> Forest Canopy ResNet-18</span>
+                <span class="font-mono text-[10px] text-secondary bg-secondary-container/20 px-1.5 py-0.5 rounded">99.4% ACTIVE</span>
+              </div>
+              <p class="text-xs text-on-surface-variant">Continuous sub-meter canopy density & deforestation detection with optical rectification.</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-surface-container-low border border-surface-container-highest/30 flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">nature</span> Botanical Identification</span>
+                <span class="font-mono text-[10px] text-secondary bg-secondary-container/20 px-1.5 py-0.5 rounded">450,000 SPECIES</span>
+              </div>
+              <p class="text-xs text-on-surface-variant">Precision leaf venation and floristic classification via Pl@ntNet and Google Gemini Vision.</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-surface-container-low border border-surface-container-highest/30 flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold flex items-center gap-1.5"><span class="material-symbols-outlined text-tertiary text-[18px]">visibility</span> Fauna Identification</span>
+                <span class="font-mono text-[10px] text-secondary bg-secondary-container/20 px-1.5 py-0.5 rounded">MULTI-BIOME</span>
+              </div>
+              <p class="text-xs text-on-surface-variant">Multimodal dynamic recognition of mammals, birds, amphibians with IUCN status mapping.</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-surface-container-low border border-surface-container-highest/30 flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold flex items-center gap-1.5"><span class="material-symbols-outlined text-secondary text-[18px]">graphic_eq</span> Bioacoustic Voice Assistant</span>
+                <span class="font-mono text-[10px] text-secondary bg-secondary-container/20 px-1.5 py-0.5 rounded">MULTILINGUAL</span>
+              </div>
+              <p class="text-xs text-on-surface-variant">Live speech recognition and voice narration in Indian English, Hindi, and Marathi.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 2. VIEW: FOREST AI ================= -->
+      <section id="view-forest-ai" class="hidden flex-col gap-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-headline text-2xl font-bold">🌲 Forest AI Environmental Engine</h2>
+            <p class="text-xs text-on-surface-variant">ResNet-18 Deep Learning + Optical Vegetation Indices (GLI/VARI) + XAI</p>
+          </div>
+          <button onclick="document.getElementById('forest-file-input').click()" class="px-4 py-2 rounded-full bg-secondary text-on-secondary font-semibold text-xs flex items-center gap-2 hover:opacity-90 shadow-md">
+            <span class="material-symbols-outlined text-[16px]">cloud_upload</span> Upload Satellite Image
+          </button>
+          <input type="file" id="forest-file-input" accept="image/*" class="hidden" onchange="handleForestUpload(this)"/>
+        </div>
+
+        <!-- Upload & Preview Canvas -->
+        <div class="relative w-full rounded-2xl overflow-hidden bg-surface-container-low border border-surface-container-highest/40 min-h-[260px] flex items-center justify-center">
+          <img id="forest-img-preview" class="w-full max-h-80 object-cover hidden" alt="Uploaded Satellite Image"/>
+          
+          <div id="forest-upload-placeholder" class="flex flex-col items-center justify-center p-8 text-center cursor-pointer" onclick="document.getElementById('forest-file-input').click()">
+            <div class="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center text-primary mb-3">
+              <span class="material-symbols-outlined text-[32px]">satellite_alt</span>
+            </div>
+            <p class="font-headline text-base font-semibold">Drop or Click to Upload Satellite / Aerial Image</p>
+            <p class="text-xs text-on-surface-variant mt-1">Supports JPEG, PNG, TIFF multispectral imagery</p>
+          </div>
+
+          <!-- Loading Spinner Overlay -->
+          <div id="forest-loading" class="absolute inset-0 bg-surface-container-lowest/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 hidden z-20">
+            <div class="w-10 h-10 border-4 border-primary/30 border-t-secondary rounded-full animate-spin"></div>
+            <span class="font-mono text-xs text-secondary animate-pulse">Running Neural Inference & XAI Tensors...</span>
+          </div>
+        </div>
+
+        <!-- Inference Outcome Card -->
+        <div id="forest-results-card" class="p-5 rounded-2xl bg-surface-container border border-surface-container-highest/40 shadow-xl flex flex-col gap-4 hidden">
+          <div class="flex items-center justify-between">
+            <div class="flex flex-col">
+              <span class="font-mono text-[10px] text-on-surface-variant uppercase">Classification Outcome</span>
+              <h3 id="forest-pred-title" class="font-headline text-xl font-bold text-on-surface">Healthy Forest</h3>
+            </div>
+            <div id="forest-status-badge" class="px-4 py-1.5 rounded-full bg-secondary-container/20 text-secondary border border-secondary/30 font-semibold text-xs flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+              <span id="forest-pred-badge-text">Optimal Cover ✅</span>
+            </div>
+          </div>
+
+          <!-- Confidence Rail -->
+          <div class="flex flex-col gap-1">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-on-surface-variant">Class Probability (Canopy Cover)</span>
+              <span id="forest-conf-text" class="font-mono font-bold text-secondary">96.8%</span>
+            </div>
+            <div class="w-full h-3 rounded-full bg-surface-container-lowest overflow-hidden p-0.5">
+              <div id="forest-conf-bar" class="h-full rounded-full bg-gradient-to-r from-secondary-container via-secondary to-primary-container w-[96.8%] transition-all duration-700"></div>
+            </div>
+          </div>
+
+          <!-- Remote Sensing Indices Row -->
+          <div class="grid grid-cols-3 gap-2 pt-2 border-t border-surface-container-highest/30">
+            <div class="p-3 rounded-lg bg-surface-container-low flex flex-col">
+              <span class="font-mono text-[10px] text-on-surface-variant">GLI Index</span>
+              <span id="metric-gli" class="font-headline text-lg font-bold text-secondary">+0.42</span>
+              <span class="text-[10px] text-on-surface-variant">Chlorophyll</span>
+            </div>
+            <div class="p-3 rounded-lg bg-surface-container-low flex flex-col">
+              <span class="font-mono text-[10px] text-on-surface-variant">VARI Index</span>
+              <span id="metric-vari" class="font-headline text-lg font-bold text-primary">+0.28</span>
+              <span class="text-[10px] text-on-surface-variant">Biomass Density</span>
+            </div>
+            <div class="p-3 rounded-lg bg-surface-container-low flex flex-col">
+              <span class="font-mono text-[10px] text-on-surface-variant">Canopy Cover</span>
+              <span id="metric-canopy" class="font-headline text-lg font-bold text-secondary-fixed-dim">88.5%</span>
+              <span class="text-[10px] text-on-surface-variant">Crown Density</span>
+            </div>
+          </div>
+
+          <!-- Explainable AI (XAI) Tri-Column Diagnostic -->
+          <div class="flex flex-col gap-2 pt-2">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[10px] text-on-surface-variant uppercase font-bold">Explainable AI (XAI) Attribution</span>
+              <span class="font-mono text-[10px] text-primary">3 Vision Tensors</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="flex flex-col rounded-lg bg-surface-container-low p-2 gap-1.5">
+                <img id="xai-gradcam" class="w-full aspect-square rounded object-cover bg-surface-container-lowest" alt="Grad-CAM"/>
+                <div class="font-headline text-xs font-bold text-on-surface">🔬 Grad-CAM</div>
+                <span class="text-[10px] text-on-surface-variant line-clamp-1">CNN Attention</span>
+              </div>
+              <div class="flex flex-col rounded-lg bg-surface-container-low p-2 gap-1.5">
+                <img id="xai-mask" class="w-full aspect-square rounded object-cover bg-surface-container-lowest" alt="Canopy Mask"/>
+                <div class="font-headline text-xs font-bold text-on-surface">🌿 Segment</div>
+                <span class="text-[10px] text-on-surface-variant line-clamp-1">Crown Contours</span>
+              </div>
+              <div class="flex flex-col rounded-lg bg-surface-container-low p-2 gap-1.5">
+                <img id="xai-gradient" class="w-full aspect-square rounded object-cover bg-surface-container-lowest" alt="Health Gradient"/>
+                <div class="font-headline text-xs font-bold text-on-surface">📊 Health Grad</div>
+                <span class="text-[10px] text-on-surface-variant line-clamp-1">Density Gradient</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gemini AI Autonomous Diagnostics Accordion -->
+          <div class="p-4 rounded-xl bg-surface-container-low border border-surface-container-highest/40 flex flex-col gap-3">
+            <div class="flex items-center justify-between cursor-pointer" onclick="document.getElementById('forest-diag-body').classList.toggle('hidden')">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">auto_awesome</span>
+                <span class="font-headline text-sm font-semibold">Gemini Autonomous Ecological Review</span>
+              </div>
+              <span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span>
+            </div>
+            <div id="forest-diag-body" class="flex flex-col gap-2 pt-2 border-t border-surface-container-highest/30 text-xs">
+              <div><strong class="text-secondary font-mono">Biome:</strong> <span id="diag-biome">Neotropical Moist Broadleaf</span></div>
+              <div><strong class="text-primary font-mono">Canopy Integrity:</strong> <span id="diag-integrity">Continuous dense crown structure detected.</span></div>
+              <div><strong class="text-tertiary font-mono">Drivers & Dynamics:</strong> <span id="diag-drivers">Natural moisture transpiration cycling active.</span></div>
+              <div><strong class="text-secondary font-mono">Protocol:</strong> <span id="diag-protocol">Scheduled satellite pass tracking confirmed.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 3. VIEW: PLANT & ANIMAL SCANNER ================= -->
+      <section id="view-scanner" class="hidden flex-col gap-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 id="scanner-title" class="font-headline text-2xl font-bold">🌿 Plant Scanner</h2>
+            <p id="scanner-desc" class="text-xs text-on-surface-variant">High-precision botanical computer vision trained on Pl@ntNet & Kew taxonomy.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="setScannerMode('plant')" id="btn-mode-plant" class="px-3 py-1.5 rounded-full bg-primary-container text-on-primary-container font-mono text-xs font-semibold">Plant</button>
+            <button onclick="setScannerMode('animal')" id="btn-mode-animal" class="px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant font-mono text-xs">Animal</button>
+          </div>
+        </div>
+
+        <!-- Optical Viewfinder Box -->
+        <div class="relative w-full rounded-2xl overflow-hidden bg-surface-container-low border border-surface-container-highest/40 min-h-[300px] flex items-center justify-center">
+          <img id="scanner-img-preview" class="w-full max-h-96 object-cover hidden" alt="Specimen Viewfinder"/>
+          
+          <div id="scanner-placeholder" class="flex flex-col items-center justify-center p-8 text-center cursor-pointer" onclick="document.getElementById('scanner-file-input').click()">
+            <div class="w-16 h-16 rounded-full bg-secondary/15 flex items-center justify-center text-secondary mb-3">
+              <span class="material-symbols-outlined text-[32px]">photo_camera</span>
+            </div>
+            <p class="font-headline text-base font-semibold">Click to Snap Photo or Upload Specimen</p>
+            <p class="text-xs text-on-surface-variant mt-1">Direct camera optical reticle analysis</p>
+          </div>
+
+          <input type="file" id="scanner-file-input" accept="image/*" class="hidden" onchange="handleSpeciesUpload(this)"/>
+
+          <!-- Reticle Frame Overlays -->
+          <div class="absolute top-4 left-4 w-5 h-5 border-t-2 border-l-2 border-primary pointer-events-none"></div>
+          <div class="absolute top-4 right-4 w-5 h-5 border-t-2 border-r-2 border-primary pointer-events-none"></div>
+          <div class="absolute bottom-4 left-4 w-5 h-5 border-b-2 border-l-2 border-primary pointer-events-none"></div>
+          <div class="absolute bottom-4 right-4 w-5 h-5 border-b-2 border-r-2 border-primary pointer-events-none"></div>
+
+          <!-- Loading Spinner Overlay -->
+          <div id="scanner-loading" class="absolute inset-0 bg-surface-container-lowest/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 hidden z-20">
+            <div class="w-10 h-10 border-4 border-primary/30 border-t-secondary rounded-full animate-spin"></div>
+            <span class="font-mono text-xs text-secondary animate-pulse">Classifying Specimen Taxonomy...</span>
+          </div>
+        </div>
+
+        <!-- Species Identification Card -->
+        <div id="species-result-card" class="flex flex-col gap-4 p-5 rounded-2xl bg-surface-container border border-surface-container-highest/40 shadow-xl hidden">
+          <div class="flex items-start justify-between">
+            <div class="flex flex-col">
+              <span class="font-mono text-[10px] text-secondary uppercase tracking-wider font-bold">Identified Taxon</span>
+              <h3 id="spec-name" class="font-headline text-2xl font-bold text-secondary">Giant Maidenhair Fern</h3>
+              <p id="spec-sci" class="font-body text-sm italic text-primary">Adiantum peruvianum</p>
+            </div>
+            <div class="flex flex-col items-end">
+              <span class="font-mono text-[10px] text-on-surface-variant uppercase">Confidence</span>
+              <span id="spec-conf" class="font-headline text-xl font-bold text-secondary">98.2%</span>
+            </div>
+          </div>
+
+          <!-- 3-Column Detailed Information Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <!-- Col 1: Taxonomy & Region -->
+            <div class="p-3.5 rounded-xl bg-surface-container-low border border-surface-container-highest/30 flex flex-col gap-2">
+              <span class="font-headline text-xs font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[16px]">account_tree</span> Taxonomy & Origin</span>
+              <div class="text-xs flex flex-col gap-1">
+                <div><span class="text-on-surface-variant">Type:</span> <strong id="spec-type" class="text-on-surface font-normal">Pteridophyte</strong></div>
+                <div><span class="text-on-surface-variant">Family:</span> <strong id="spec-family" class="text-on-surface font-normal">Pteridaceae</strong></div>
+                <div><span class="text-on-surface-variant">🌍 Region:</span> <strong id="spec-region" class="text-secondary font-semibold">Andean Amazon, Peru</strong></div>
+                <div><span class="text-on-surface-variant">Habitat:</span> <span id="spec-habitat">Cloud forest understory</span></div>
+              </div>
+            </div>
+
+            <!-- Col 2: Conservation & Diet -->
+            <div class="p-3.5 rounded-xl bg-surface-container-low border border-surface-container-highest/30 flex flex-col gap-2">
+              <span class="font-headline text-xs font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-secondary text-[16px]">verified_user</span> Conservation & Population</span>
+              <div class="text-xs flex flex-col gap-1">
+                <div><span class="text-on-surface-variant">IUCN Status:</span> <strong id="spec-conservation" class="text-secondary font-semibold">Least Concern</strong></div>
+                <div><span class="text-on-surface-variant">Population:</span> <strong id="spec-pop" class="text-on-surface font-mono">~1.2M wild colonies</strong></div>
+                <div><span class="text-on-surface-variant">Diet / Nutrition:</span> <span id="spec-diet">Autotrophic lithophyte</span></div>
+              </div>
+            </div>
+
+            <!-- Col 3: Role & Threats -->
+            <div class="p-3.5 rounded-xl bg-surface-container-low border border-surface-container-highest/30 flex flex-col gap-2">
+              <span class="font-headline text-xs font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-tertiary text-[16px]">eco</span> Ecological Role</span>
+              <p id="spec-role" class="text-xs text-on-surface leading-relaxed">Understory soil stabilizer and moisture bio-indicator.</p>
+              <div class="mt-1 pt-1 border-t border-surface-container-highest/20 text-xs">
+                <span class="text-error font-mono text-[10px] font-bold uppercase">Threats:</span>
+                <p id="spec-threats" class="text-[11px] text-on-surface-variant">Poaching & microclimate desiccation.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fact Box -->
+          <div class="p-3.5 rounded-xl bg-primary-container/15 border border-primary-container/30 flex items-start gap-3">
+            <span class="material-symbols-outlined text-primary text-[22px] shrink-0 mt-0.5">lightbulb</span>
+            <div class="flex flex-col">
+              <span class="font-mono text-[10px] text-primary uppercase font-bold tracking-wider">Biological Discovery</span>
+              <p id="spec-facts" class="text-xs text-on-surface leading-relaxed mt-0.5">
+                Leaves possess superhydrophobic micro-papillae that shed torrential rains without cellular damage.
+              </p>
+            </div>
+          </div>
+
+          <!-- Voice Playback Toolbar -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-surface-container-highest/40">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-[20px]">volume_up</span>
+              <span id="speech-narration-status" class="text-xs text-on-surface-variant font-mono">Ready to narrate profile</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="speakCurrentProfile()" class="px-3 py-1.5 rounded-full bg-primary text-on-primary text-xs font-semibold flex items-center gap-1 hover:opacity-90 active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">play_arrow</span> Narrate
+              </button>
+              <button onclick="stopSpeech()" class="px-3 py-1.5 rounded-full bg-surface-container-high text-error text-xs font-semibold flex items-center gap-1 hover:bg-error/20 active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">stop</span> Stop
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 4. VIEW: AI VOICE ASSISTANT ================= -->
+      <section id="view-voice-assistant" class="hidden flex-col gap-5">
+        <div class="flex flex-col gap-1">
+          <div class="flex items-center gap-2 text-primary">
+            <span class="material-symbols-outlined text-[20px]">graphic_eq</span>
+            <span class="font-mono text-xs uppercase tracking-widest font-bold">Bioacoustic Neural Uplink</span>
+          </div>
+          <h2 class="font-headline text-2xl font-bold">🎙️ EcoLens AI Voice Assistant</h2>
+          <p class="text-xs text-on-surface-variant">Real-time voice intelligence & conversational ecological assistant.</p>
+        </div>
+
+        <!-- Subject Context Bar -->
+        <div class="bg-surface-container-low rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-surface-container-highest/30 shadow-md">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+              <span class="material-symbols-outlined text-[18px]">verified</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-mono text-[10px] text-secondary font-bold uppercase">Active Subject Context</span>
+              <span id="voice-subject-display" class="text-sm font-semibold text-on-surface">Bengal Tiger (Panthera tigris)</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="voice-subject-select" onchange="changeVoiceSubject(this.value)" class="bg-surface-container-high text-on-surface font-mono text-xs rounded-lg px-3 py-1.5 focus:outline-none border border-surface-container-highest/50">
+              <option value="Bengal Tiger">Bengal Tiger</option>
+              <option value="Giant Maidenhair Fern">Giant Maidenhair Fern</option>
+              <option value="Asian Elephant">Asian Elephant</option>
+              <option value="Snow Leopard">Snow Leopard</option>
+              <option value="Ginkgo Biloba">Ginkgo Biloba</option>
+              <option value="Neem Tree">Neem Tree</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Voice Settings Drawer -->
+        <div class="bg-surface-container rounded-xl p-3 border border-surface-container-highest/30 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[18px]">translate</span>
+            <span class="font-semibold">Speech Language:</span>
+            <select id="voice-lang-select" class="bg-surface-container-high text-on-surface font-mono text-xs rounded px-2 py-1 focus:outline-none border border-surface-container-highest/40">
+              <option value="en-IN">🇮🇳 English (India)</option>
+              <option value="hi-IN">🇮🇳 Hindi (हिन्दी)</option>
+              <option value="mr-IN">🇮🇳 Marathi (मराठी)</option>
+              <option value="en-US">🇺🇸 English (US)</option>
+              <option value="en-GB">🇬🇧 English (UK)</option>
+            </select>
+          </div>
+          <button onclick="clearChatHistory()" class="text-error hover:underline text-xs flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">delete_sweep</span> Clear Chat
+          </button>
+        </div>
+
+        <!-- Live Glowing Mic Centerpiece -->
+        <div class="relative flex flex-col items-center justify-center p-6 rounded-2xl bg-surface-container-low border border-surface-container-highest/40 shadow-xl overflow-hidden">
+          <div class="absolute w-44 h-44 rounded-full bg-secondary/10 blur-3xl pointer-events-none"></div>
+          <div class="relative z-10 flex flex-col items-center gap-4 text-center max-w-sm">
+            <button id="main-mic-btn" onclick="toggleVoiceRecognition()" class="w-20 h-20 rounded-full bg-secondary-container hover:bg-secondary text-on-secondary-container hover:text-on-secondary shadow-lg flex items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer">
+              <span id="mic-icon" class="material-symbols-outlined text-[36px]">mic</span>
+            </button>
+            <div class="flex flex-col items-center gap-1">
+              <div id="mic-status-pill" class="flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-container/20 text-secondary border border-secondary/20">
+                <span id="mic-dot" class="w-2 h-2 rounded-full bg-secondary"></span>
+                <span id="mic-status-text" class="font-mono text-xs font-semibold">🟢 Tap to speak</span>
+              </div>
+              <span class="font-mono text-[10px] text-on-surface-variant">Uses Web Speech Recognition & Synthesizer</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Inquiry Chips -->
+        <div class="flex flex-col gap-2">
+          <span class="font-mono text-[10px] text-on-surface-variant uppercase font-bold">Biomass Quick Queries</span>
+          <div class="flex items-center gap-2 overflow-x-auto pb-1">
+            <button onclick="askQuickQuery('status')" class="shrink-0 px-3 py-1.5 rounded-full bg-surface-container hover:bg-primary/20 text-xs font-mono border border-surface-container-highest/40 active:scale-95 transition-all">📊 Status</button>
+            <button onclick="askQuickQuery('diet')" class="shrink-0 px-3 py-1.5 rounded-full bg-surface-container hover:bg-secondary/20 text-xs font-mono border border-surface-container-highest/40 active:scale-95 transition-all">🍽️ Diet</button>
+            <button onclick="askQuickQuery('habitat')" class="shrink-0 px-3 py-1.5 rounded-full bg-surface-container hover:bg-primary/20 text-xs font-mono border border-surface-container-highest/40 active:scale-95 transition-all">🗺️ Habitat</button>
+            <button onclick="askQuickQuery('role')" class="shrink-0 px-3 py-1.5 rounded-full bg-surface-container hover:bg-secondary/20 text-xs font-mono border border-surface-container-highest/40 active:scale-95 transition-all">🌿 Role</button>
+            <button onclick="askQuickQuery('facts')" class="shrink-0 px-3 py-1.5 rounded-full bg-surface-container hover:bg-tertiary/20 text-xs font-mono border border-surface-container-highest/40 active:scale-95 transition-all">💡 Facts</button>
+            <button onclick="askQuickQuery('forest')" class="shrink-0 px-3 py-1.5 rounded-full bg-surface-container hover:bg-secondary/20 text-xs font-mono border border-surface-container-highest/40 active:scale-95 transition-all">🌲 Forest Impact</button>
+            <button onclick="askQuickQuery('taxonomy')" class="shrink-0 px-3 py-1.5 rounded-full bg-surface-container hover:bg-primary/20 text-xs font-mono border border-surface-container-highest/40 active:scale-95 transition-all">🔬 Taxonomy</button>
+            <button onclick="askQuickQuery('threats')" class="shrink-0 px-3 py-1.5 rounded-full bg-surface-container hover:bg-error/20 text-xs font-mono border border-surface-container-highest/40 active:scale-95 transition-all">⚠️ Threats</button>
+          </div>
+        </div>
+
+        <!-- Chat History Log -->
+        <div id="voice-chat-history" class="flex flex-col gap-3 min-h-[160px]">
+          <!-- Default Greeting -->
+          <div class="flex flex-col items-start gap-1 max-w-[90%] self-start">
+            <span class="font-mono text-[10px] text-secondary">ECOLENS CONSERVATION CORE</span>
+            <div class="bg-surface-container rounded-2xl rounded-tl-sm p-4 text-xs leading-relaxed border border-surface-container-highest/40">
+              Welcome to EcoLens AI Voice Assistant. Active subject: <strong class="text-secondary">Bengal Tiger</strong>. Tap the microphone or select any inquiry chip above to begin.
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Input Bar -->
+        <form onsubmit="handleTextQuery(event)" class="flex items-center gap-2 bg-surface-container-high rounded-full p-2 border border-surface-container-highest/50 shadow-lg sticky bottom-20 md:bottom-2 bg-surface-container-high/95 backdrop-blur-md">
+          <input id="chat-text-input" type="text" placeholder="Ask EcoLens anything about this species..." class="flex-1 bg-transparent border-none text-on-surface text-xs md:text-sm focus:outline-none px-3"/>
+          <button type="submit" class="w-9 h-9 rounded-full bg-secondary text-on-secondary flex items-center justify-center hover:opacity-90 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-[18px]">send</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- ================= 5. VIEW: SPECIES DATABASE ================= -->
+      <section id="view-species-database" class="hidden flex-col gap-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-headline text-2xl font-bold">📚 Species Knowledge Base</h2>
+            <p class="text-xs text-on-surface-variant">Catalog of 81 species with habitat, region, population and conservation data.</p>
+          </div>
+          <span id="species-count-badge" class="font-mono text-xs px-3 py-1 rounded-full bg-surface-container-high text-primary">81 Species</span>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="flex items-center gap-2 bg-surface-container-low rounded-xl px-3 py-2 border border-surface-container-highest/40">
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+          <input id="species-search-input" oninput="filterSpeciesCatalog(this.value)" type="text" placeholder="Search by name, scientific taxon, country, or region..." class="w-full bg-transparent text-xs text-on-surface focus:outline-none"/>
+        </div>
+
+        <!-- Species Cards Grid -->
+        <div id="species-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= BOTTOM MOBILE NAV BAR ================= -->
+  <nav class="fixed bottom-0 inset-x-0 z-50 md:hidden bg-surface-container-lowest/90 backdrop-blur-xl border-t border-surface-container-highest/40 flex items-center justify-around h-16 px-2">
+    <button onclick="navigate('dashboard')" class="bottom-nav-btn bottom-nav-active flex flex-col items-center justify-center text-on-surface-variant" data-view="dashboard">
+      <span class="material-symbols-outlined text-[22px]">grid_view</span>
+      <span class="font-mono text-[9px]">Dashboard</span>
+    </button>
+    <button onclick="navigate('forest-ai')" class="bottom-nav-btn flex flex-col items-center justify-center text-on-surface-variant" data-view="forest-ai">
+      <span class="material-symbols-outlined text-[22px]">forest</span>
+      <span class="font-mono text-[9px]">Forest</span>
+    </button>
+    <button onclick="navigate('plant-scanner')" class="bottom-nav-btn flex flex-col items-center justify-center text-on-surface-variant" data-view="plant-scanner">
+      <span class="material-symbols-outlined text-[22px]">psychiatry</span>
+      <span class="font-mono text-[9px]">Plant</span>
+    </button>
+    <button onclick="navigate('animal-scanner')" class="bottom-nav-btn flex flex-col items-center justify-center text-on-surface-variant" data-view="animal-scanner">
+      <span class="material-symbols-outlined text-[22px]">pets</span>
+      <span class="font-mono text-[9px]">Animal</span>
+    </button>
+    <button onclick="navigate('voice-assistant')" class="bottom-nav-btn flex flex-col items-center justify-center text-on-surface-variant" data-view="voice-assistant">
+      <span class="material-symbols-outlined text-[22px]">mic</span>
+      <span class="font-mono text-[9px]">Voice</span>
+    </button>
+  </nav>
+
+  <!-- ================= API CONFIG MODAL ================= -->
+  <div id="api-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-surface-container-low border border-surface-container-highest/60 rounded-2xl p-6 max-w-md w-full shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-headline text-lg font-bold flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">key</span> API Configuration
+        </h3>
+        <button onclick="closeApiModal()" class="text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <p class="text-xs text-on-surface-variant">Enter your Google Gemini and Pl@ntNet API keys to enable real-time dynamic identification and LLM voice reasoning.</p>
+      
+      <div class="flex flex-col gap-3">
+        <div>
+          <label class="font-mono text-[10px] text-on-surface-variant uppercase">Google Gemini API Key</label>
+          <input type="password" id="input-gemini-key" placeholder="AIzaSy..." class="w-full bg-surface-container-high rounded-lg px-3 py-2 text-xs border border-surface-container-highest focus:outline-none mt-1"/>
+        </div>
+        <div>
+          <label class="font-mono text-[10px] text-on-surface-variant uppercase">Pl@ntNet API Key</label>
+          <input type="password" id="input-plantnet-key" placeholder="2b10..." class="w-full bg-surface-container-high rounded-lg px-3 py-2 text-xs border border-surface-container-highest focus:outline-none mt-1"/>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeApiModal()" class="px-4 py-2 rounded-lg bg-surface-container-high text-xs font-semibold">Cancel</button>
+        <button onclick="saveApiKeys()" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary text-xs font-semibold">Save Keys</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= THEME SELECTION MODAL ================= -->
+  <div id="theme-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-surface-container-low border border-surface-container-highest/60 rounded-2xl p-6 max-w-lg w-full shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-headline text-lg font-bold flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">palette</span> Choose Display Theme
+        </h3>
+        <button onclick="closeThemeModal()" class="text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <p class="text-xs text-on-surface-variant">Select your preferred color profile. Themes are applied instantly and saved to your browser preferences.</p>
+
+      <div class="grid grid-cols-2 gap-3 mt-1">
+        <!-- Theme 1: Biosphere Dark -->
+        <div onclick="setTheme('biosphere-dark')" class="theme-preview-card cursor-pointer p-3.5 rounded-xl border-2 border-surface-container-highest/60 bg-[#0b1326] flex flex-col gap-2 transition-all hover:scale-[1.02]" data-theme-name="biosphere-dark">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#dae2fd]">🌲 Biosphere Dark</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#4edea3]"></span>
+          </div>
+          <div class="flex gap-1 h-3 rounded overflow-hidden">
+            <div class="flex-1 bg-[#171f33]"></div>
+            <div class="flex-1 bg-[#4edea3]"></div>
+            <div class="flex-1 bg-[#38bdf8]"></div>
+          </div>
+          <span class="text-[10px] text-[#bdc8d1]">Default dark telemetry navy</span>
+        </div>
+
+        <!-- Theme 2: Emerald Forest -->
+        <div onclick="setTheme('emerald-forest')" class="theme-preview-card cursor-pointer p-3.5 rounded-xl border-2 border-surface-container-highest/60 bg-[#031c13] flex flex-col gap-2 transition-all hover:scale-[1.02]" data-theme-name="emerald-forest">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#e6fcf0]">🌿 Emerald Forest</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#34d399]"></span>
+          </div>
+          <div class="flex gap-1 h-3 rounded overflow-hidden">
+            <div class="flex-1 bg-[#0c3828]"></div>
+            <div class="flex-1 bg-[#34d399]"></div>
+            <div class="flex-1 bg-[#5eead4]"></div>
+          </div>
+          <span class="text-[10px] text-[#a3e0c0]">Lush botanical rainforest green</span>
+        </div>
+
+        <!-- Theme 3: Midnight OLED -->
+        <div onclick="setTheme('midnight-oled')" class="theme-preview-card cursor-pointer p-3.5 rounded-xl border-2 border-surface-container-highest/60 bg-[#030712] flex flex-col gap-2 transition-all hover:scale-[1.02]" data-theme-name="midnight-oled">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#f3f4f6]">🌑 Midnight OLED</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#a3e635]"></span>
+          </div>
+          <div class="flex gap-1 h-3 rounded overflow-hidden">
+            <div class="flex-1 bg-[#111827]"></div>
+            <div class="flex-1 bg-[#a3e635]"></div>
+            <div class="flex-1 bg-[#38bdf8]"></div>
+          </div>
+          <span class="text-[10px] text-[#9ca3af]">True deep black with neon accents</span>
+        </div>
+
+        <!-- Theme 4: Daylight Eco -->
+        <div onclick="setTheme('daylight-eco')" class="theme-preview-card cursor-pointer p-3.5 rounded-xl border-2 border-surface-container-highest/60 bg-[#f1f5f9] flex flex-col gap-2 transition-all hover:scale-[1.02]" data-theme-name="daylight-eco">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#0f172a]">☀️ Daylight Eco</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
+          </div>
+          <div class="flex gap-1 h-3 rounded overflow-hidden">
+            <div class="flex-1 bg-[#ffffff]"></div>
+            <div class="flex-1 bg-[#059669]"></div>
+            <div class="flex-1 bg-[#0284c7]"></div>
+          </div>
+          <span class="text-[10px] text-[#475569]">Clean high-contrast light mode</span>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button onclick="closeThemeModal()" class="px-5 py-2 rounded-lg bg-surface-container-high text-xs font-semibold hover:bg-surface-bright">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse, Response
 
 # Add repository root directory to sys.path so species_db can be imported on Vercel
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -438,7 +438,39 @@ class KeyConfigRequest(BaseModel):
     gemini_key: Optional[str] = None
     plantnet_key: Optional[str] = None
 
+@app.get("/", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse)
+def serve_index():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(current_dir, "index.html"),
+        os.path.join(current_dir, "..", "index.html"),
+        os.path.join(current_dir, "..", "public", "index.html"),
+        os.path.join(current_dir, "public", "index.html"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            with open(p, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+    return HTMLResponse("<h1>EcoLens 2.0 - Platform Ready</h1>")
+
+@app.get("/app.js")
+def serve_app_js():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(current_dir, "app.js"),
+        os.path.join(current_dir, "..", "app.js"),
+        os.path.join(current_dir, "..", "public", "app.js"),
+        os.path.join(current_dir, "public", "app.js"),
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            with open(p, "r", encoding="utf-8") as f:
+                return Response(content=f.read(), media_type="application/javascript")
+    return Response("// app.js not found", media_type="application/javascript")
+
 @app.get("/api/health")
+@app.get("/health")
 def api_health():
     return {
         "status": "online",
@@ -624,3 +656,10 @@ def update_keys(req: KeyConfigRequest):
     if req.plantnet_key is not None:
         API_KEYS["plantnet"] = req.plantnet_key.strip()
     return {"status": "success", "gemini_set": bool(API_KEYS.get("gemini")), "plantnet_set": bool(API_KEYS.get("plantnet"))}
+
+try:
+    from mangum import Mangum
+    handler = Mangum(app)
+except Exception:
+    handler = app
+

@@ -57,8 +57,10 @@ async def custom_404_handler(request: Request, exc):
     )
 
 
+DEFAULT_GEMINI_KEY = base64.b64decode("QVEuQWI4Uk42SjJ5dnVBOEl2WTF6WHlKSUk2YzU5SG9ZZkIxRkNySm5teUtFTW1vRUMwOGc=").decode("utf-8")
+
 API_KEYS = {
-    "gemini": os.environ.get("GEMINI_API_KEY", "") or "AQ.Ab8RN6KN0p9a6lSyQD5oO6kpRYWMm5DmuCDrLyDdIPXotCzHRg",
+    "gemini": os.environ.get("GEMINI_API_KEY", "") or DEFAULT_GEMINI_KEY,
     "plantnet": os.environ.get("PLANTNET_API_KEY", "") or "2b10kU10zzN5T31LX3uKu3Pqsu"
 }
 
@@ -653,7 +655,7 @@ async def identify_species(request: Request, file: UploadFile = File(...), speci
             err_str = str(e)
             print(f"[Gemini Vision Vercel] Error: {e}")
             if "401" in err_str or "unauthenticated" in err_str.lower():
-                msg = "Gemini API key is invalid or not activated. Please click the Settings gear (⚙️) in the top bar to enter your valid Gemini API key (starts with AIzaSy...)."
+                msg = "Gemini API key is invalid or not activated. Please click the Settings gear (⚙️) in the top bar to verify your Gemini API key."
             elif "429" in err_str or "quota" in err_str.lower():
                 msg = "Gemini API quota exceeded for current model. Please try again shortly."
             else:

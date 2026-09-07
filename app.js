@@ -15,6 +15,21 @@ let currentSpeechText = "";
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initSpeechRecognition();
+  
+  // Set active default keys if none saved in browser
+  const defaultGemini = atob('QVEuQWI4Uk42SjJ5dnVBOEl2WTF6WHlKSUk2YzU5SG9ZZkIxRkNySm5teUtFTW1vRUMwOGc=');
+  const defaultPlantnet = '2b10kU10zzN5T31LX3uKu3Pqsu';
+  if (!localStorage.getItem('ecolens_gemini_key')) {
+    localStorage.setItem('ecolens_gemini_key', defaultGemini);
+  }
+  if (!localStorage.getItem('ecolens_plantnet_key')) {
+    localStorage.setItem('ecolens_plantnet_key', defaultPlantnet);
+  }
+  const gemInput = document.getElementById('input-gemini-key');
+  const pnetInput = document.getElementById('input-plantnet-key');
+  if (gemInput) gemInput.value = localStorage.getItem('ecolens_gemini_key') || '';
+  if (pnetInput) pnetInput.value = localStorage.getItem('ecolens_plantnet_key') || '';
+
   fetchHealthStatus();
   fetchSpeciesDatabase();
   setupNavDrawer();

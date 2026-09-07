@@ -42,8 +42,8 @@ app.add_middleware(
 )
 
 API_KEYS = {
-    "gemini": os.environ.get("GEMINI_API_KEY", ""),
-    "plantnet": os.environ.get("PLANTNET_API_KEY", "")
+    "gemini": os.environ.get("GEMINI_API_KEY", "") or "AQ.Ab8RN6KN0p9a6lSyQD5oO6kpRYWMm5DmuCDrLyDdIPXotCzHRg",
+    "plantnet": os.environ.get("PLANTNET_API_KEY", "") or "2b10kU10zzN5T31LX3uKu3Pqsu"
 }
 
 # Fallback: check .streamlit/secrets.toml if present
@@ -633,6 +633,15 @@ async def identify_species(file: UploadFile = File(...), species_type: str = For
             }
         except Exception as e:
             print(f"[Gemini Vision Vercel] Error: {e}")
+            return {
+                "status": "error",
+                "engine": "Google Gemini Vision Error",
+                "species_name": "Identification Failed",
+                "scientific_name": str(e),
+                "confidence": 0.0,
+                "profile": {"facts": f"Error: {e}"},
+                "clean_speech": f"Could not identify the species due to: {e}"
+            }
 
     fallback_name = "Giant Maidenhair Fern" if species_type.lower() == "plant" else "Bengal Tiger"
     data = SPECIES_DATABASE.get(fallback_name, {})

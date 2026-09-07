@@ -123,9 +123,8 @@ def compute_vegetation_indices(image: Image.Image):
 # GEMINI MULTI-MODEL CASCADE
 # ============================================================
 GEMINI_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-3.5-flash-lite",
+    "gemini-3.6-flash",
 ]
 
 def _call_gemini_api(payload, api_key, timeout=25):
@@ -170,6 +169,8 @@ def _parse_gemini_json(text_content):
     raise RuntimeError("Could not parse Gemini response as JSON.")
 
 def query_gemini_vision(image: Image.Image, species_type: str, api_key: str):
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     buffered = io.BytesIO()
     image.save(buffered, format="JPEG", quality=80)
     img_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
@@ -208,6 +209,8 @@ def query_gemini_vision(image: Image.Image, species_type: str, api_key: str):
     raise RuntimeError("Received empty response candidate from Gemini API.")
 
 def query_gemini_forest_diagnostics(image: Image.Image, prediction: str, confidence: float, veg_result: dict, api_key: str):
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     buffered = io.BytesIO()
     image.save(buffered, format="JPEG", quality=75)
     img_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')

@@ -242,10 +242,8 @@ def generate_gradcam(image: Image.Image, target_class: int):
 # GEMINI MULTI-MODEL FALLBACK CASCADE
 # ============================================================
 GEMINI_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-1.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash-8b",
+    "gemini-3.5-flash-lite",
+    "gemini-3.6-flash",
 ]
 
 def _call_gemini_api(payload, api_key, timeout=25):
@@ -290,6 +288,8 @@ def _parse_gemini_json(text_content):
     raise RuntimeError(f"Could not parse Gemini response as JSON.")
 
 def query_gemini_vision(image: Image.Image, species_type: str, api_key: str):
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     buffered = io.BytesIO()
     image.save(buffered, format="JPEG", quality=85)
     img_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')

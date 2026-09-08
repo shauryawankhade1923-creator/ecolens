@@ -378,13 +378,13 @@ window.addEventListener('resize', () => {
 // ============================================================
 // CARBON CREDIT & ECONOMIC ROI CALCULATOR
 // ============================================================
-let carbonHectares = 25;
-let carbonPricePerTonne = 30;
+let carbonHectares = 60; // acres
+let carbonPricePerTonne = 2500; // ₹2,500 / t CO2e
 let carbonHorizonYears = 5;
-let carbonBaseRatePerHa = 22; // default 22 tonnes CO2e / ha / year
+let carbonBaseRatePerHa = 9; // default 9 tonnes CO2e / acre / year (was 22/ha)
 
 function onHectaresInput(val) {
-  const num = Math.max(1, Math.min(1000, parseInt(val) || 1));
+  const num = Math.max(1, Math.min(2500, parseInt(val) || 1));
   carbonHectares = num;
   const slider = document.getElementById('carbon-hectares-slider');
   const input = document.getElementById('carbon-hectares-input');
@@ -396,7 +396,7 @@ function onHectaresInput(val) {
 function setCarbonPrice(price) {
   carbonPricePerTonne = price;
   
-  [15, 30, 50].forEach(p => {
+  [1250, 2500, 4200].forEach(p => {
     const btn = document.getElementById(`btn-price-${p}`);
     if (btn) {
       if (p === price) {
@@ -409,8 +409,13 @@ function setCarbonPrice(price) {
 
   const priceText = document.getElementById('carbon-active-price-text');
   if (priceText) {
-    const tierName = price === 15 ? 'Avoidance' : (price === 30 ? 'Removal' : 'Bio-ARR');
-    priceText.textContent = `$${price} / t CO2e (${tierName})`;
+    const tierName = price === 1250 ? 'Avoidance' : (price === 2500 ? 'Removal' : 'Bio-ARR');
+    priceText.textContent = `₹${price.toLocaleString('en-IN')} / t CO2e (${tierName})`;
+  }
+
+  const marketSubtitle = document.getElementById('carbon-market-val-subtitle');
+  if (marketSubtitle) {
+    marketSubtitle.textContent = `Market value at ₹${price.toLocaleString('en-IN')}/t`;
   }
 
   updateCarbonROI();
@@ -437,22 +442,22 @@ function initCarbonCalculator(data) {
   const canopy = data.canopy_cover_percent || 50;
   const bare = data.bare_ground_percent || (100 - canopy);
   
-  // Calibrate sequestration rate: degraded land has higher restoration delta
+  // Calibrate sequestration rate per acre: degraded land has higher restoration delta
   if (bare >= 50) {
-    carbonBaseRatePerHa = 24.5;
+    carbonBaseRatePerHa = 10;
   } else if (bare >= 25) {
-    carbonBaseRatePerHa = 21.0;
+    carbonBaseRatePerHa = 8.5;
   } else {
-    carbonBaseRatePerHa = 18.0;
+    carbonBaseRatePerHa = 7.3;
   }
 
   // Auto-calibrate parcel size if large deforestation is detected
-  if (bare > 60 && carbonHectares < 40) {
-    carbonHectares = 50;
+  if (bare > 60 && carbonHectares < 100) {
+    carbonHectares = 125;
     const slider = document.getElementById('carbon-hectares-slider');
     const input = document.getElementById('carbon-hectares-input');
-    if (slider) slider.value = 50;
-    if (input) input.value = 50;
+    if (slider) slider.value = 125;
+    if (input) input.value = 125;
   }
 
   updateCarbonROI();
@@ -464,25 +469,25 @@ function updateCarbonROI() {
   // Cumulative sequestration over selected horizon
   const totalSequestration = Math.round(annualSequestration * carbonHorizonYears);
 
-  // Financial modeling (USD)
+  // Financial modeling (INR)
   const grossRevenue = Math.round(totalSequestration * carbonPricePerTonne);
   
-  // Capital & Operational Expenditure
-  const initialPlantingCost = carbonHectares * 850; // $850/ha saplings, labor, soil inoculation
-  const annualMonitoringCost = carbonHectares * 110; // $110/ha/year telemetry, remote sensing audit, rangers
+  // Capital & Operational Expenditure in INR
+  const initialPlantingCost = carbonHectares * 29000; // ₹29,000/acre saplings, labor, soil inoculation
+  const annualMonitoringCost = carbonHectares * 3750; // ₹3,750/acre/year telemetry, remote sensing audit, rangers
   const totalExpenditure = initialPlantingCost + (annualMonitoringCost * carbonHorizonYears);
 
   const netProfit = Math.max(0, grossRevenue - totalExpenditure);
   
   // Payback period (years)
   const annualGross = annualSequestration * carbonPricePerTonne;
-  const annualNetCashflow = Math.max(100, annualGross - annualMonitoringCost);
+  const annualNetCashflow = Math.max(1000, annualGross - annualMonitoringCost);
   const paybackYears = Math.min(20, Math.max(0.8, (initialPlantingCost / annualNetCashflow))).toFixed(1);
 
   // Real-world equivalencies (EPA & ICAO standards)
   const carsRemovedPerYear = Math.round(annualSequestration / 4.6); // 4.6 t CO2e / car / year
   const flightsOffset = Math.round(totalSequestration / 0.8); // 0.8 t CO2e / passenger flight
-  const waterGainPercent = Math.min(55, Math.round(18 + (carbonHectares * 0.08)));
+  const waterGainPercent = Math.min(55, Math.round(18 + (carbonHectares * 0.03)));
 
   // Update DOM Elements
   const elTotalTonnes = document.getElementById('carbon-total-tonnes');
@@ -493,12 +498,12 @@ function updateCarbonROI() {
   const elFlights = document.getElementById('carbon-eq-flights');
   const elWater = document.getElementById('carbon-eq-water');
 
-  if (elTotalTonnes) elTotalTonnes.textContent = `${totalSequestration.toLocaleString()} t`;
-  if (elGross) elGross.textContent = `$${grossRevenue.toLocaleString()}`;
-  if (elNet) elNet.textContent = `+$${netProfit.toLocaleString()}`;
+  if (elTotalTonnes) elTotalTonnes.textContent = `${totalSequestration.toLocaleString('en-IN')} t`;
+  if (elGross) elGross.textContent = `₹${grossRevenue.toLocaleString('en-IN')}`;
+  if (elNet) elNet.textContent = `+₹${netProfit.toLocaleString('en-IN')}`;
   if (elPayback) elPayback.textContent = `${paybackYears} Years`;
-  if (elCars) elCars.textContent = `${carsRemovedPerYear.toLocaleString()} cars/yr`;
-  if (elFlights) elFlights.textContent = `${flightsOffset.toLocaleString()} flights`;
+  if (elCars) elCars.textContent = `${carsRemovedPerYear.toLocaleString('en-IN')} cars/yr`;
+  if (elFlights) elFlights.textContent = `${flightsOffset.toLocaleString('en-IN')} flights`;
   if (elWater) elWater.textContent = `+${waterGainPercent}% groundwater`;
 }
 
@@ -563,7 +568,7 @@ function displayForestResults(data) {
   document.getElementById('diag-integrity').textContent = diag.integrity || 'Canopy integrity verified across spatial crown tensors.';
   document.getElementById('diag-drivers').textContent = diag.drivers || 'Vegetative transpiration and conservation buffer active.';
   if (document.getElementById('diag-carbon-risk')) {
-    document.getElementById('diag-carbon-risk').textContent = diag.carbon_loss_risk || `${data.carbon_loss_per_ha} tonnes C/ha estimated exposure`;
+    document.getElementById('diag-carbon-risk').textContent = diag.carbon_loss_risk || `${(data.carbon_loss_per_ha ? (data.carbon_loss_per_ha / 2.471).toFixed(1) : '15')} tonnes C/acre estimated exposure`;
   }
   if (document.getElementById('diag-bio-threat')) {
     document.getElementById('diag-bio-threat').textContent = diag.biodiversity_threat || 'Habitat corridors under continuous telemetry.';
@@ -580,7 +585,7 @@ function displayForestResults(data) {
     document.getElementById('afforest-summary').textContent = roadmap.summary || 'Assisted Natural Regeneration with multi-tier native tree planting.';
   }
   if (document.getElementById('afforest-carbon-badge')) {
-    document.getElementById('afforest-carbon-badge').textContent = roadmap.carbon_sequestration_potential || '~22 tonnes CO2/ha/yr';
+    document.getElementById('afforest-carbon-badge').textContent = roadmap.carbon_sequestration_potential || '~9 tonnes CO2/acre/yr';
   }
   if (document.getElementById('afforest-soil')) {
     document.getElementById('afforest-soil').textContent = roadmap.soil_and_water_interventions || 'Contour swales, woodchip mulch, and mycorrhizal biochar inoculation.';
@@ -1615,10 +1620,10 @@ function closeThemeModal() {
 // ============================================================
 // STANDALONE CARBON CREDIT & CLIMATE FINANCE HUB CONTROLLER
 // ============================================================
-let hubHectares = 50;
-let hubPricePerTonne = 30;
+let hubHectares = 125; // acres
+let hubPricePerTonne = 2500; // ₹2,500 / t CO2e
 let hubHorizonYears = 5;
-let hubBaseRatePerHa = 25; // 25 t CO2e / ha / year for Tropical Rainforest default
+let hubBaseRatePerHa = 10; // 10 t CO2e / acre / year for Tropical Rainforest default (was 25/ha)
 let currentHubBiome = 'rainforest';
 
 function initStandaloneCarbonHub() {
@@ -1650,7 +1655,7 @@ function setHubBiome(biomeKey, rate) {
 }
 
 function onHubHectaresInput(val) {
-  const num = Math.max(1, Math.min(1000, parseInt(val) || 1));
+  const num = Math.max(1, Math.min(2500, parseInt(val) || 1));
   hubHectares = num;
   const slider = document.getElementById('hub-hectares-slider');
   const input = document.getElementById('hub-hectares-input');
@@ -1662,7 +1667,7 @@ function onHubHectaresInput(val) {
 function setHubCarbonPrice(price) {
   hubPricePerTonne = price;
 
-  [15, 30, 50].forEach(p => {
+  [1250, 2500, 4200].forEach(p => {
     const btn = document.getElementById(`hub-btn-price-${p}`);
     if (btn) {
       if (p === price) {
@@ -1675,8 +1680,8 @@ function setHubCarbonPrice(price) {
 
   const priceText = document.getElementById('hub-active-price-text');
   if (priceText) {
-    const tierName = price === 15 ? 'Avoidance' : (price === 30 ? 'Removal (Verra)' : 'Bio-ARR Premium');
-    priceText.textContent = `$${price} / t CO2e (${tierName})`;
+    const tierName = price === 1250 ? 'Avoidance' : (price === 2500 ? 'Removal (Verra)' : 'Bio-ARR Premium');
+    priceText.textContent = `₹${price.toLocaleString('en-IN')} / t CO2e (${tierName})`;
   }
 
   updateHubCarbonROI();
@@ -1705,19 +1710,19 @@ function updateHubCarbonROI() {
   // Cumulative sequestration over selected horizon
   const totalSequestration = Math.round(annualSequestration * hubHorizonYears);
 
-  // Financial modeling (USD)
+  // Financial modeling (INR)
   const grossRevenue = Math.round(totalSequestration * hubPricePerTonne);
 
-  // Capital & Operational Expenditure
-  const initialPlantingCost = hubHectares * 850; // $850/ha
-  const annualMonitoringCost = hubHectares * 110; // $110/ha/year
+  // Capital & Operational Expenditure in INR
+  const initialPlantingCost = hubHectares * 29000; // ₹29,000/acre
+  const annualMonitoringCost = hubHectares * 3750; // ₹3,750/acre/year
   const totalExpenditure = initialPlantingCost + (annualMonitoringCost * hubHorizonYears);
 
   const netProfit = Math.max(0, grossRevenue - totalExpenditure);
 
   // Breakeven / Payback period (years)
   const annualGross = annualSequestration * hubPricePerTonne;
-  const annualNetCashflow = Math.max(100, annualGross - annualMonitoringCost);
+  const annualNetCashflow = Math.max(1000, annualGross - annualMonitoringCost);
   const paybackYears = Math.min(20, Math.max(0.8, (initialPlantingCost / annualNetCashflow))).toFixed(1);
 
   // Projected Internal Rate of Return (IRR estimate)
@@ -1730,7 +1735,7 @@ function updateHubCarbonROI() {
   // Real-world equivalencies (EPA & ICAO standards)
   const carsRemovedPerYear = Math.round(annualSequestration / 4.6); // 4.6 t CO2e / car / year
   const flightsOffset = Math.round(totalSequestration / 0.8); // 0.8 t CO2e / passenger flight
-  const waterGainPercent = Math.min(65, Math.round(18 + (hubHectares * 0.12)));
+  const waterGainPercent = Math.min(65, Math.round(18 + (hubHectares * 0.05)));
 
   // Update DOM Elements
   const elTotalTonnes = document.getElementById('hub-kpi-tonnes');
@@ -1742,12 +1747,12 @@ function updateHubCarbonROI() {
   const elFlights = document.getElementById('hub-eq-flights');
   const elWater = document.getElementById('hub-eq-water');
 
-  if (elTotalTonnes) elTotalTonnes.textContent = `${totalSequestration.toLocaleString()} t`;
-  if (elGross) elGross.textContent = `$${grossRevenue.toLocaleString()}`;
-  if (elNet) elNet.textContent = `+$${netProfit.toLocaleString()}`;
+  if (elTotalTonnes) elTotalTonnes.textContent = `${totalSequestration.toLocaleString('en-IN')} t`;
+  if (elGross) elGross.textContent = `₹${grossRevenue.toLocaleString('en-IN')}`;
+  if (elNet) elNet.textContent = `+₹${netProfit.toLocaleString('en-IN')}`;
   if (elPayback) elPayback.textContent = `${paybackYears} Years`;
   if (elIrr) elIrr.textContent = `Projected IRR: ${irrPercent}%`;
-  if (elCars) elCars.textContent = `${carsRemovedPerYear.toLocaleString()} cars/yr`;
-  if (elFlights) elFlights.textContent = `${flightsOffset.toLocaleString()} flights`;
+  if (elCars) elCars.textContent = `${carsRemovedPerYear.toLocaleString('en-IN')} cars/yr`;
+  if (elFlights) elFlights.textContent = `${flightsOffset.toLocaleString('en-IN')} flights`;
   if (elWater) elWater.textContent = `+${waterGainPercent}% aquifer recharge`;
 }

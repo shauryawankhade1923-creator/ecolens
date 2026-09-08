@@ -272,7 +272,7 @@ def query_gemini_forest_diagnostics(image: Image.Image, prediction: str, confide
         '    ],\n'
         '    "soil_and_water_interventions": "Specific water harvesting swales, contour bunds, organic mulching, and biochar recommendations",\n'
         '    "recovery_timeline": "Phased timeline (e.g., Months 1-6 Ground Prep -> Years 1-3 Pioneer Closure -> Year 5 Climax Emergence)",\n'
-        '    "carbon_sequestration_potential": "Estimated tonnes CO2e sequestered per hectare per year once established (e.g., 18 - 25 tonnes/ha/year)"\n'
+        '    "carbon_sequestration_potential": "Estimated tonnes CO2e sequestered per acre per year once established (e.g., 7 - 11 tonnes/acre/year)"\n'
         '  },\n'
         '  "stewardship_protocol": "Direct actionable instructions for field rangers, community forestry, and land stewards"\n'
         "}"
@@ -310,7 +310,7 @@ def query_gemini_forest_diagnostics(image: Image.Image, prediction: str, confide
         "ecological_health_score": health_score,
         "integrity": "Continuous crown canopy with high photosynthetic activity and low fragmentation." if is_healthy else "Severe crown fragmentation detected with high bare soil exposure and diminished vegetative density.",
         "drivers": "Stable vegetative transpiration with protected conservation buffer status." if is_healthy else "Anthropogenic land clearing, logging corridors, or seasonal agricultural conversion pressures.",
-        "carbon_loss_risk": "< 2.5 tonnes C/ha (Minimal Risk)" if is_healthy else "Elevated: ~35-50 tonnes C/ha depletion across bare patches.",
+        "carbon_loss_risk": "< 1 tonne C/acre (Minimal Risk)" if is_healthy else "Elevated: ~14-20 tonnes C/acre depletion across bare patches.",
         "biodiversity_threat": "Low: Native ecological corridors preserved for avian and mammalian species." if is_healthy else "Elevated: Fragmented habitat connectivity reducing shelter for regional wildlife.",
         "afforestation_roadmap": {
             "summary": "Implement Assisted Natural Regeneration (ANR) with multi-tiered pioneer tree planting to restore crown density and protect topsoil moisture.",
@@ -322,7 +322,7 @@ def query_gemini_forest_diagnostics(image: Image.Image, prediction: str, confide
             ],
             "soil_and_water_interventions": "Dig contour swales along slope gradients to capture rainwater runoff; apply 5cm woodchip mulch and mycorrhizal bio-fertilizers around sapling pits.",
             "recovery_timeline": "Months 1-6: Soil contouring and pioneer pitting; Years 1-3: Pioneer canopy closure (40% cover); Years 4-6: Climax species dominance (75%+ cover).",
-            "carbon_sequestration_potential": "Approximately 18 to 26 tonnes of CO2 equivalent per hectare per year once canopy matures."
+            "carbon_sequestration_potential": "Approximately 7 to 11 tonnes of CO2 equivalent per acre per year once canopy matures."
         },
         "stewardship_protocol": "Establish continuous multispectral satellite pass monitoring; restrict heavy machinery and establish native sapling nursery within 5km radius."
     }
